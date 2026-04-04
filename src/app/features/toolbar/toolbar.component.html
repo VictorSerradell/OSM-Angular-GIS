@@ -1,0 +1,104 @@
+<!-- ============================================================
+  OSM Angular GIS - Toolbar Component Template
+  ============================================================ -->
+
+<mat-toolbar class="gis-toolbar" color="primary">
+
+  <!-- Menu / Sidebar toggle -->
+  <button mat-icon-button
+    (click)="toggleSidebar.emit()"
+    [matTooltip]="sidebarOpen() ? 'Cerrar panel' : 'Abrir panel'">
+    <mat-icon>{{ sidebarOpen() ? 'menu_open' : 'menu' }}</mat-icon>
+  </button>
+
+  <!-- Brand -->
+  <div class="toolbar-brand">
+    <mat-icon class="brand-icon">public</mat-icon>
+    <span class="brand-title">OSM Angular GIS</span>
+    <span class="brand-version">v1.0</span>
+  </div>
+
+  <span class="flex-spacer"></span>
+
+  <!-- Feature count badge -->
+  @if (featureCount() > 0) {
+    <button mat-icon-button
+      (click)="navigateToTab.emit(4)"
+      [matTooltip]="featureCount() + ' features dibujadas'">
+      <mat-icon
+        [matBadge]="featureCount()"
+        matBadgeColor="accent"
+        matBadgeSize="small">
+        layers
+      </mat-icon>
+    </button>
+  }
+
+  <!-- Measurement result chip -->
+  @if (measurementService.lastResult(); as result) {
+    <div class="result-chip">
+      <mat-icon class="chip-icon">straighten</mat-icon>
+      <span class="chip-value">{{ result.formattedValue }}</span>
+    </div>
+  }
+
+  <!-- Theme toggle -->
+  <button mat-icon-button
+    (click)="toggleTheme.emit()"
+    [matTooltip]="themeService.isDark() ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'">
+    <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+  </button>
+
+  <!-- Fullscreen toggle -->
+  <button mat-icon-button
+    (click)="toggleFullscreen.emit()"
+    [matTooltip]="isFullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'">
+    <mat-icon>{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+  </button>
+
+  <!-- Settings menu -->
+  <button mat-icon-button [matMenuTriggerFor]="settingsMenu" matTooltip="Configuración">
+    <mat-icon>settings</mat-icon>
+  </button>
+
+  <mat-menu #settingsMenu="matMenu" xPosition="before">
+    <div class="menu-header">Acciones rápidas</div>
+
+    <button mat-menu-item (click)="navigateToTab.emit(2)">
+      <mat-icon>edit</mat-icon>
+      <span>Ir a Dibujar</span>
+    </button>
+
+    <button mat-menu-item (click)="navigateToTab.emit(3)">
+      <mat-icon>construction</mat-icon>
+      <span>Ir a Análisis</span>
+    </button>
+
+    <mat-divider></mat-divider>
+
+    <button mat-menu-item
+      (click)="exportGeoJSON.emit()"
+      [disabled]="featureCount() === 0">
+      <mat-icon>download</mat-icon>
+      <span>Exportar GeoJSON</span>
+    </button>
+
+    @if (hasMeasurement()) {
+      <button mat-menu-item (click)="clearMeasurements.emit()">
+        <mat-icon>straighten</mat-icon>
+        <span>Limpiar mediciones</span>
+      </button>
+    }
+
+    <mat-divider></mat-divider>
+
+    <button mat-menu-item
+      (click)="clearAll.emit()"
+      [disabled]="featureCount() === 0"
+      class="danger-item">
+      <mat-icon>delete_sweep</mat-icon>
+      <span>Limpiar todo</span>
+    </button>
+  </mat-menu>
+
+</mat-toolbar>

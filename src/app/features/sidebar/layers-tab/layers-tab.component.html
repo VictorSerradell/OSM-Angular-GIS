@@ -1,0 +1,73 @@
+<!-- ============================================================
+  OSM Angular GIS - Layers Tab Template
+  ============================================================ -->
+
+<div class="tab-content">
+
+  <!-- ── Base Layers ──────────────────────────────────────── -->
+  <h3 class="section-title">
+    <mat-icon>map</mat-icon> Capas base
+  </h3>
+  <p class="section-hint">Selecciona el mapa de fondo.</p>
+
+  <mat-list class="layer-list">
+    @for (layer of baseLayers; track layer.id) {
+      <mat-list-item
+        class="layer-item"
+        [class.active]="layerService.activeBaseLayerId() === layer.id"
+        (click)="switchBaseLayer(layer.id)">
+
+        <mat-icon matListItemIcon class="layer-radio">
+          {{ layerService.activeBaseLayerId() === layer.id
+            ? 'radio_button_checked'
+            : 'radio_button_unchecked' }}
+        </mat-icon>
+
+        <div matListItemTitle class="layer-name">{{ layer.name }}</div>
+
+        @if (layerService.activeBaseLayerId() === layer.id) {
+          <mat-icon matListItemMeta class="active-check">check_circle</mat-icon>
+        }
+
+      </mat-list-item>
+    }
+  </mat-list>
+
+  <mat-divider></mat-divider>
+
+  <!-- ── Overlay Layers ──────────────────────────────────── -->
+  <h3 class="section-title">
+    <mat-icon>layers</mat-icon> Capas de datos
+  </h3>
+  <p class="section-hint">Activa o desactiva capas de datos sobre el mapa.</p>
+
+  <mat-list class="overlay-list">
+    @for (overlay of layerService.overlays(); track overlay.id) {
+      <mat-list-item class="overlay-item">
+        <div class="overlay-color-dot"
+          [style.background]="overlay.color"
+          matListItemIcon>
+        </div>
+        <div matListItemTitle class="overlay-name">{{ overlay.name }}</div>
+        <mat-slide-toggle
+          matListItemMeta
+          [checked]="overlay.visible"
+          color="primary"
+          (change)="toggleOverlay(overlay.id)">
+        </mat-slide-toggle>
+      </mat-list-item>
+    }
+  </mat-list>
+
+  <mat-divider></mat-divider>
+
+  <!-- ── Attribution ──────────────────────────────────────── -->
+  <div class="attribution-box">
+    <mat-icon class="attr-icon">info_outline</mat-icon>
+    <p class="attr-text">
+      Datos © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors.
+      Tiles © varios proveedores.
+    </p>
+  </div>
+
+</div>

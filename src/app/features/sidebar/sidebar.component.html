@@ -1,0 +1,62 @@
+<!-- ============================================================
+  OSM Angular GIS - Sidebar Component Template
+  ============================================================ -->
+
+<mat-tab-group
+  class="sidebar-tabs"
+  [selectedIndex]="selectedTabIndex()"
+  (selectedIndexChange)="tabChange.emit($event)"
+  animationDuration="200ms">
+
+  <!-- ── Tab 1: Buscar ──────────────────────────────────── -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">search</mat-icon>
+      <span class="tab-label">Buscar</span>
+    </ng-template>
+    <app-search-tab />
+  </mat-tab>
+
+  <!-- ── Tab 2: Capas ───────────────────────────────────── -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">layers</mat-icon>
+      <span class="tab-label">Capas</span>
+    </ng-template>
+    <app-layers-tab />
+  </mat-tab>
+
+  <!-- ── Tab 3: Dibujar ────────────────────────────────── -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">edit</mat-icon>
+      <span class="tab-label">Dibujar</span>
+    </ng-template>
+    <app-draw-tab />
+  </mat-tab>
+
+  <!-- ── Tab 4: Análisis ───────────────────────────────── -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">construction</mat-icon>
+      <span class="tab-label">Análisis</span>
+    </ng-template>
+    <app-tools-tab />
+  </mat-tab>
+
+  <!-- ── Tab 5: Datos ──────────────────────────────────── -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon
+        class="tab-icon"
+        [matBadge]="featureCount() > 0 ? featureCount() : null"
+        matBadgeColor="accent"
+        matBadgeSize="small">
+        dataset
+      </mat-icon>
+      <span class="tab-label">Datos</span>
+    </ng-template>
+    <app-data-tab />
+  </mat-tab>
+
+</mat-tab-group>

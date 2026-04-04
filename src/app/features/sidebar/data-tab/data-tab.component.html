@@ -1,0 +1,141 @@
+<!-- ============================================================
+  OSM Angular GIS - Data Tab Template
+  ============================================================ -->
+
+<div class="tab-content">
+
+  <!-- ── Import / Export actions ───────────────────────── -->
+  <div class="actions-grid">
+    <button mat-raised-button color="primary" class="action-btn"
+      (click)="fileInput.click()"
+      [disabled]="importing()">
+      @if (importing()) {
+        <mat-spinner diameter="16"></mat-spinner>
+      } @else {
+        <mat-icon>upload_file</mat-icon>
+      }
+      Importar
+    </button>
+
+    <input #fileInput type="file" accept=".geojson,.json"
+      style="display:none" (change)="onFileSelect($event)">
+
+    <button mat-raised-button color="accent" class="action-btn"
+      [disabled]="featureCount() === 0"
+      (click)="exportGeoJSON()">
+      <mat-icon>download</mat-icon>
+      Exportar
+    </button>
+  </div>
+
+  <button mat-stroked-button class="copy-btn"
+    [disabled]="featureCount() === 0"
+    (click)="exportCopy()">
+    <mat-icon>content_copy</mat-icon>
+    Copiar GeoJSON al portapapeles
+  </button>
+
+  <mat-divider></mat-divider>
+
+  <!-- ── Feature list header ────────────────────────────── -->
+  @if (featureCount() > 0) {
+    <div class="list-header">
+      <span class="list-count">
+        {{ featureCount() }} feature{{ featureCount() !== 1 ? 's' : '' }}
+      </span>
+      <button mat-icon-button color="warn"
+        (click)="clearAll()"
+        matTooltip="Eliminar todas">
+        <mat-icon>delete_sweep</mat-icon>
+      </button>
+    </div>
+  }
+
+  <!-- ── Feature list ───────────────────────────────────── -->
+  @if (featureCount() === 0) {
+    <div class="empty-state">
+      <mat-icon>inbox</mat-icon>
+      <p>Sin features todavía.</p>
+      <p class="empty-hint">Usa la pestaña <strong>Dibujar</strong> o importa un GeoJSON.</p>
+    </div>
+  } @else {
+    <div class="feature-list">
+      @for (feature of drawService.features(); track feature.properties.id) {
+        <div class="feature-card" [class.editing]="editingId() === feature.properties.id">
+
+          @if (editingId() === feature.properties.id) {
+            <!-- Edit form -->
+            <div class="edit-form">
+              <mat-form-field appearance="outline" class="edit-field">
+                <mat-label>Nombre</mat-label>
+                <input matInput
+                  [value]="editName()"
+                  (input)="editName.set($any($event.target).value)">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="edit-field">
+                <mat-label>Descripción</mat-label>
+                <textarea matInput rows="2"
+                  [value]="editDescription()"
+                  (input)="editDescription.set($any($event.target).value)">
+                </textarea>
+              </mat-form-field>
+
+              <div class="edit-actions">
+                <button mat-button (click)="cancelEdit()">Cancelar</button>
+                <button mat-raised-button color="primary" (click)="saveEdit()">
+                  <mat-icon>save</mat-icon> Guardar
+                </button>
+              </div>
+            </div>
+
+          } @else {
+            <!-- View row -->
+            <div class="feature-row">
+              <mat-icon class="type-icon"
+                [style.color]="getFeatureColor(feature)">
+                {{ getFeatureIcon(feature) }}
+              </mat-icon>
+
+              <div class="feature-info">
+                <div class="feature-name">{{ feature.properties.name }}</div>
+                @if (feature.properties.description) {
+                  <div class="feature-desc">{{ feature.properties.description }}</div>
+                }
+                <div class="feature-meta">
+                  <span class="meta-type">{{ feature.properties.drawType }}</span>
+                  @if (feature.properties.area) {
+                    <span>· {{ (feature.properties.area / 1e6).toFixed(4) }} km²</span>
+                  }
+                  @if (feature.properties.radius) {
+                    <span>· r={{ feature.properties.radius | number:'1.0-0' }}m</span>
+                  }
+                </div>
+              </div>
+
+              <div class="feature-actions">
+                <button mat-icon-button
+                  (click)="flyToFeature(feature.properties.id)"
+                  matTooltip="Ir a">
+                  <mat-icon>my_location</mat-icon>
+                </button>
+                <button mat-icon-button
+                  (click)="startEdit(feature)"
+                  matTooltip="Editar">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn"
+                  (click)="deleteFeature(feature.properties.id)"
+                  matTooltip="Eliminar">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

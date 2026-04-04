@@ -1,0 +1,206 @@
+// ============================================================
+// OSM Angular GIS - Search Tab Styles
+// ============================================================
+
+.tab-content {
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tab-description {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+  margin: 0;
+  line-height: 1.5;
+
+  :host-context(.dark-theme) & {
+    color: rgba(255, 255, 255, 0.45);
+  }
+}
+
+.search-field {
+  width: 100%;
+}
+
+// ── Quick searches ─────────────────────────────────────────
+
+.quick-searches {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .quick-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.dark-theme) & {
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+}
+
+// ── Results ────────────────────────────────────────────────
+
+.results-header {
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.4);
+  padding: 0 4px;
+
+  :host-context(.dark-theme) & {
+    color: rgba(255, 255, 255, 0.35);
+  }
+}
+
+.search-results,
+.recent-list {
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+
+  :host-context(.dark-theme) & {
+    border-color: rgba(255, 255, 255, 0.07);
+  }
+}
+
+.result-item {
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(21, 101, 192, 0.06);
+  }
+
+  .result-name {
+    font-size: 13px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .result-path {
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.45);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    :host-context(.dark-theme) & {
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  .result-type {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.04);
+    padding: 2px 6px;
+    border-radius: 4px;
+
+    :host-context(.dark-theme) & {
+      color: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.05);
+    }
+  }
+}
+
+// ── Recent ────────────────────────────────────────────────
+
+.recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+
+  .recent-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: rgba(0, 0, 0, 0.45);
+
+    :host-context(.dark-theme) & {
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  button {
+    width: 28px;
+    height: 28px;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+// ── States ────────────────────────────────────────────────
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 16px;
+  color: rgba(0, 0, 0, 0.3);
+  text-align: center;
+
+  mat-icon {
+    font-size: 38px;
+    width: 38px;
+    height: 38px;
+    opacity: 0.45;
+  }
+
+  p {
+    font-size: 13px;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  :host-context(.dark-theme) & {
+    color: rgba(255, 255, 255, 0.28);
+  }
+}
+
+.hint-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.4);
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.025);
+  border-radius: 8px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    opacity: 0.6;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  :host-context(.dark-theme) & {
+    color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.03);
+  }
+}

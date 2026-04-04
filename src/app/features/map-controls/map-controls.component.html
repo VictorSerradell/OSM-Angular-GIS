@@ -1,0 +1,50 @@
+<!-- ============================================================
+  OSM Angular GIS - Map Controls (uses computed signals, not ms.x())
+  ============================================================ -->
+
+@if (!sidebarOpen()) {
+  <button
+    mat-mini-fab color="primary"
+    class="fab fab--sidebar"
+    (click)="openSidebar.emit()"
+    matTooltip="Abrir panel" matTooltipPosition="right">
+    <mat-icon>chevron_right</mat-icon>
+  </button>
+}
+
+<div class="fab-group">
+
+  @if (hasUserLocation()) {
+    <button
+      mat-mini-fab color="accent"
+      class="fab fab--user-loc"
+      (click)="flyToUserLocation()"
+      matTooltip="Ir a mi ubicación" matTooltipPosition="left">
+      <mat-icon>person_pin_circle</mat-icon>
+    </button>
+  }
+
+  <button
+    mat-fab color="primary"
+    class="fab fab--locate"
+    (click)="locateUser()"
+    [disabled]="isLocating()"
+    matTooltip="Mi ubicación" matTooltipPosition="left">
+    @if (isLocating()) {
+      <mat-spinner diameter="24" color="accent"></mat-spinner>
+    } @else {
+      <mat-icon>my_location</mat-icon>
+    }
+  </button>
+
+</div>
+
+<div class="coords-bar" (click)="copyCoords()" matTooltip="Clic para copiar coordenadas">
+  <mat-icon class="coords-icon">location_on</mat-icon>
+  <span class="coords-lat">{{ latDisplay() }}</span>
+  <span class="coords-sep">,</span>
+  <span class="coords-lng">{{ lngDisplay() }}</span>
+  <span class="coords-divider">|</span>
+  <mat-icon class="zoom-icon">zoom_in</mat-icon>
+  <span class="coords-zoom">{{ zoomDisplay() }}</span>
+</div>

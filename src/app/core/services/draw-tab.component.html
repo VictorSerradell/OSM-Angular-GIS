@@ -1,0 +1,72 @@
+<!-- ============================================================
+  OSM Angular GIS - Draw Tab Template
+  ============================================================ -->
+
+<div class="tab-content">
+
+  <p class="tab-description">
+    Selecciona una herramienta y dibuja directamente sobre el mapa.
+    Las features aparecen también en la pestaña <strong>Datos</strong>.
+  </p>
+
+  <!-- Tool grid -->
+  <div class="tools-grid">
+    @for (tool of tools; track tool.id) {
+      <button
+        mat-raised-button
+        class="tool-btn"
+        [class.active]="drawService.activeDrawTool() === tool.id"
+        [color]="drawService.activeDrawTool() === tool.id ? 'accent' : ''"
+        (click)="activateTool(tool.id)"
+        [matTooltip]="tool.tooltip">
+        <mat-icon>{{ tool.icon }}</mat-icon>
+        <span class="tool-label">{{ tool.label }}</span>
+        <span class="tool-desc">{{ tool.description }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- Active tool indicator - NOTE: uses @let to avoid arrow-fn in template -->
+  @if (drawService.activeDrawTool(); as activeTool) {
+    <div class="active-indicator">
+      <div class="indicator-dot"></div>
+      <span>
+        <strong>{{ getToolLabel(activeTool) }}</strong>
+        activo — haz clic en el mapa para dibujar. Doble clic para finalizar.
+      </span>
+    </div>
+  }
+
+  <mat-divider></mat-divider>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <span class="stat-val">{{ featureCount() }}</span>
+      <span class="stat-lbl">Features</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-val">{{ drawService.drawnLayerCount() }}</span>
+      <span class="stat-lbl">En mapa</span>
+    </div>
+  </div>
+
+  <!-- Hint -->
+  <div class="info-box">
+    <mat-icon>info_outline</mat-icon>
+    <p>
+      También puedes usar los controles nativos de Leaflet Draw
+      <strong>(esquina superior izquierda del mapa)</strong> para editar
+      y eliminar features existentes.
+    </p>
+  </div>
+
+  <!-- Clear all -->
+  @if (featureCount() > 0) {
+    <button mat-stroked-button color="warn" class="clear-btn" (click)="clearAll()">
+      <mat-icon>delete_sweep</mat-icon>
+      Limpiar todas las features
+    </button>
+  }
+
+</div>

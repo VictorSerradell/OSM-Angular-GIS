@@ -1,0 +1,187 @@
+// ============================================================
+// OSM Angular GIS - Map Controls Styles
+// All elements are positioned absolute over the map
+// ============================================================
+
+:host {
+  // The host sits inside mat-sidenav-content (position: relative)
+  position: absolute;
+  inset: 0;
+  pointer-events: none; // pass clicks through to map by default
+  z-index: 500;
+}
+
+// ── FAB helpers ────────────────────────────────────────────
+
+.fab {
+  pointer-events: all; // re-enable clicks on FABs
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover:not([disabled]) {
+    transform: scale(1.06);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  &[disabled] {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+}
+
+// Sidebar re-open FAB — left edge, vertically centred
+.fab--sidebar {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  &:hover:not([disabled]) {
+    transform: translateY(-50%) scale(1.06);
+  }
+}
+
+// FAB group — bottom-right stack
+.fab-group {
+  position: absolute;
+  bottom: 72px; // above the coords bar
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: 480px) {
+    bottom: 60px;
+    right: 10px;
+  }
+}
+
+.fab--user-loc {
+  // mini fab, already positioned by fab-group
+}
+
+.fab--locate {
+  // main FAB
+}
+
+// ── Coordinates bar ────────────────────────────────────────
+
+.coords-bar {
+  position: absolute;
+  bottom: 36px;
+  left: 12px;
+  pointer-events: all;
+
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 20px;
+  padding: 5px 12px 5px 8px;
+
+  font-size: 11px;
+  font-family: 'Roboto Mono', 'Courier New', monospace;
+  color: rgba(0, 0, 0, 0.72);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: background 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  }
+
+  :host-context(.dark-theme) & {
+    background: rgba(30, 30, 30, 0.88);
+    border-color: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.72);
+
+    &:hover {
+      background: rgba(40, 40, 40, 0.95);
+    }
+  }
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+    padding: 4px 10px 4px 7px;
+    bottom: 28px;
+    left: 8px;
+  }
+}
+
+.coords-icon {
+  font-size: 13px;
+  width: 13px;
+  height: 13px;
+  color: #1565c0;
+  flex-shrink: 0;
+
+  :host-context(.dark-theme) & {
+    color: #90caf9;
+  }
+}
+
+.zoom-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.coords-sep {
+  opacity: 0.4;
+  margin: 0 -2px;
+}
+
+.coords-divider {
+  opacity: 0.25;
+  padding: 0 3px;
+}
+
+.coords-zoom {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.5);
+  font-family: 'Roboto', sans-serif;
+
+  :host-context(.dark-theme) & {
+    color: rgba(255, 255, 255, 0.45);
+  }
+}
+
+// ── User location icon (injected by Leaflet) ───────────────
+
+::ng-deep .user-location-icon {
+  .user-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(21, 101, 192, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: location-pulse 2s ease-in-out infinite;
+
+    .user-dot-inner {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #1565c0;
+      border: 2px solid white;
+      box-shadow: 0 2px 6px rgba(21, 101, 192, 0.5);
+    }
+  }
+}
+
+@keyframes location-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.4); opacity: 0.6; }
+}

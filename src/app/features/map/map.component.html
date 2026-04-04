@@ -1,0 +1,51 @@
+<!-- ============================================================
+  OSM Angular GIS - Map Component Shell  [v2 - orchestrator]
+  NOTA: Este archivo tiene SOLO 65 líneas.
+  Si tu archivo tiene más de 100 líneas, estás usando la versión
+  antigua. Reemplázalo completamente por este.
+  ============================================================ -->
+
+<div class="gis-shell" [class.dark-theme]="themeService.isDark()">
+
+  <!-- Loading overlay -->
+  @if (loading()) {
+  <div class="loading-overlay">
+    <mat-spinner diameter="48" color="primary"></mat-spinner>
+    <p class="loading-text">Cargando mapa…</p>
+  </div>
+  }
+
+  <!-- Toolbar -->
+  <app-toolbar [sidebarOpen]="sidebarOpen()" [isFullscreen]="isFullscreen()" (toggleSidebar)="toggleSidebar()"
+    (toggleTheme)="toggleTheme()" (toggleFullscreen)="toggleFullscreen()" (clearAll)="clearAll()"
+    (exportGeoJSON)="exportGeoJSON()" (clearMeasurements)="clearMeasurements()" (navigateToTab)="navigateToTab($event)">
+  </app-toolbar>
+
+  <!-- Sidenav layout -->
+  <mat-sidenav-container class="gis-sidenav-container">
+
+    <!-- Sidebar panel -->
+    <mat-sidenav class="gis-sidenav" [opened]="sidebarOpen()" mode="side" position="start"
+      (openedChange)="sidebarOpen.set($event)">
+
+      <app-sidebar [selectedTabIndex]="selectedTabIndex()" [featureCount]="featureCount()"
+        (tabChange)="onTabChange($event)">
+      </app-sidebar>
+
+    </mat-sidenav>
+
+    <!-- Map content -->
+    <mat-sidenav-content class="map-sidenav-content">
+
+      <!-- Leaflet map DOM target -->
+      <div #mapContainer class="leaflet-map-container"></div>
+
+      <!-- FABs + coordinates bar -->
+      <app-map-controls [sidebarOpen]="sidebarOpen()" (openSidebar)="toggleSidebar()">
+      </app-map-controls>
+
+    </mat-sidenav-content>
+
+  </mat-sidenav-container>
+
+</div>

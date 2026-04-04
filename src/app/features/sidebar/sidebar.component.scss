@@ -1,0 +1,63 @@
+// ============================================================
+// OSM Angular GIS - Sidebar Styles
+// ============================================================
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar-tabs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  ::ng-deep {
+    .mat-mdc-tab-header {
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      background: inherit;
+
+      .dark-theme & {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+
+    .mat-mdc-tab-body-wrapper {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .mat-mdc-tab-body {
+      height: 100%;
+    }
+
+    .mat-mdc-tab-body-content {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    // Compact tabs
+    .mat-mdc-tab {
+      min-width: 56px;
+      padding: 0 8px;
+    }
+  }
+}
+
+.tab-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+.tab-label {
+  font-size: 11px;
+  margin-left: 4px;
+
+  @media (max-width: 380px) {
+    display: none;
+  }
+}

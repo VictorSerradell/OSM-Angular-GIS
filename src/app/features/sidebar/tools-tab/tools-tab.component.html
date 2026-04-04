@@ -1,0 +1,136 @@
+<!-- ============================================================
+  OSM Angular GIS - Tools Tab Template (Turf.js Analysis)
+  ============================================================ -->
+
+<div class="tab-content">
+
+  <p class="tab-description">
+    Herramientas de análisis geoespacial con <strong>Turf.js</strong>.
+  </p>
+
+  <!-- ── Measurement tools ──────────────────────────────── -->
+  <h3 class="section-title">
+    <mat-icon>straighten</mat-icon> Medición interactiva
+  </h3>
+
+  <div class="tool-cards">
+    @for (tool of tools; track tool.id) {
+      <button
+        mat-raised-button
+        class="tool-card"
+        [class.active]="measurementService.activeTool() === tool.id"
+        [style.--tool-color]="tool.color"
+        (click)="toggleMeasureTool(tool.id)">
+        <mat-icon [style.color]="tool.color">{{ tool.icon }}</mat-icon>
+        <div class="card-text">
+          <span class="card-label">{{ tool.label }}</span>
+          <span class="card-desc">{{ tool.description }}</span>
+        </div>
+        @if (measurementService.activeTool() === tool.id) {
+          <mat-icon class="active-icon">stop_circle</mat-icon>
+        }
+      </button>
+    }
+  </div>
+
+  <!-- Active measurement state -->
+  @if (measurementService.measuring()) {
+    <div class="measuring-bar">
+      <mat-progress-bar mode="indeterminate" color="warn"></mat-progress-bar>
+      <div class="measuring-info">
+        <mat-icon>pending</mat-icon>
+        <span>Haciendo clic en el mapa…</span>
+        <button mat-stroked-button color="warn" (click)="stopMeasurement()">
+          <mat-icon>stop</mat-icon> Detener
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Measurement result -->
+  @if (measurementService.lastResult(); as result) {
+    <mat-card class="result-card" [style.--result-color]="result.type === 'distance' ? '#f57c00' : '#7b1fa2'">
+      <mat-card-content>
+        <div class="result-row">
+          <mat-icon class="result-icon">calculate</mat-icon>
+          <div class="result-info">
+            <span class="result-type">{{ result.type | titlecase }}</span>
+            <span class="result-value">{{ result.formattedValue }}</span>
+          </div>
+          <button mat-icon-button (click)="clearMeasurements()" matTooltip="Limpiar">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <mat-divider></mat-divider>
+
+  <!-- ── Buffer ─────────────────────────────────────────── -->
+  <h3 class="section-title">
+    <mat-icon>blur_circular</mat-icon> Buffer
+  </h3>
+  <p class="tool-hint">
+    Genera un área de influencia alrededor de las features dibujadas.
+  </p>
+
+  <div class="slider-row">
+    <mat-slider min="0.1" max="50" step="0.1" discrete>
+      <input matSliderThumb
+        [value]="bufferRadius()"
+        (valueChange)="onBufferRadiusChange($event)">
+    </mat-slider>
+    <div class="slider-value">
+      <span class="val-num">{{ bufferRadius() }}</span>
+      <span class="val-unit">km</span>
+    </div>
+  </div>
+
+  <button
+    mat-raised-button
+    color="primary"
+    class="action-btn"
+    (click)="applyBuffer()"
+    [disabled]="!hasFeatures() || isProcessing()">
+    @if (isProcessing()) {
+      <mat-icon class="spin">refresh</mat-icon>
+    } @else {
+      <mat-icon>blur_circular</mat-icon>
+    }
+    Aplicar Buffer
+  </button>
+
+  <mat-divider></mat-divider>
+
+  <!-- ── Centroid ───────────────────────────────────────── -->
+  <h3 class="section-title">
+    <mat-icon>my_location</mat-icon> Centroide
+  </h3>
+  <p class="tool-hint">
+    Calcula y muestra el centroide geométrico de todas las features.
+  </p>
+
+  <button
+    mat-raised-button
+    color="primary"
+    class="action-btn"
+    (click)="applyCentroid()"
+    [disabled]="!hasFeatures() || isProcessing()">
+    @if (isProcessing()) {
+      <mat-icon class="spin">refresh</mat-icon>
+    } @else {
+      <mat-icon>my_location</mat-icon>
+    }
+    Calcular Centroide
+  </button>
+
+  <!-- No features warning -->
+  @if (!hasFeatures()) {
+    <div class="warning-box">
+      <mat-icon>warning_amber</mat-icon>
+      <p>Buffer y Centroide requieren features dibujadas. Usa la pestaña <strong>Dibujar</strong> primero.</p>
+    </div>
+  }
+
+</div>
