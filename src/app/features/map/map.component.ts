@@ -76,8 +76,6 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit(): Promise<void> {
-    // Small delay to let Angular Material apply its CSS before Leaflet measures the container
-    await new Promise((r) => setTimeout(r, 50));
     await this.initMap();
   }
 
