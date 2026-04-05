@@ -92,11 +92,10 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       if (this.tourService.shouldAutoStart()) {
         setTimeout(() => this.tourService.start(), 1000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Map init error:', err);
-      this.snack.open('❌ Error al cargar el mapa', 'Reintentar', {
-        duration: 5000,
-      });
+      const msg = err?.message ?? 'Error desconocido';
+      this.snack.open(`❌ ${msg}`, 'OK', { duration: 8000 });
     } finally {
       this.loading.set(false);
     }

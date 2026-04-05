@@ -17,14 +17,45 @@ export class LayerService {
   readonly baseLayers = signal<BaseLayerConfig[]>(BASE_LAYERS);
   readonly activeBaseLayerId = signal<string>('osm-standard');
   readonly overlays = signal<OverlayLayerConfig[]>([
-    { id: 'drawn-features', name: 'Features dibujadas', type: 'overlay', visible: true, icon: 'edit', color: '#1565c0' },
-    { id: 'search-results', name: 'Resultados de búsqueda', type: 'overlay', visible: true, icon: 'search', color: '#43a047' },
-    { id: 'measurements', name: 'Mediciones', type: 'overlay', visible: true, icon: 'straighten', color: '#f57c00' },
-    { id: 'overpass', name: 'Datos Overpass', type: 'overlay', visible: false, icon: 'layers', color: '#7b1fa2' },
+    {
+      id: 'drawn-features',
+      name: 'Features dibujadas',
+      type: 'overlay',
+      visible: true,
+      icon: 'edit',
+      color: '#1565c0',
+    },
+    {
+      id: 'search-results',
+      name: 'Resultados de búsqueda',
+      type: 'overlay',
+      visible: true,
+      icon: 'search',
+      color: '#43a047',
+    },
+    {
+      id: 'measurements',
+      name: 'Mediciones',
+      type: 'overlay',
+      visible: true,
+      icon: 'straighten',
+      color: '#f57c00',
+    },
+    {
+      id: 'overpass',
+      name: 'Datos Overpass',
+      type: 'overlay',
+      visible: false,
+      icon: 'layers',
+      color: '#7b1fa2',
+    },
   ]);
 
   private tileLayerInstances = new Map<string, import('leaflet').TileLayer>();
-  private overlayLayerInstances = new Map<string, import('leaflet').LayerGroup>();
+  private overlayLayerInstances = new Map<
+    string,
+    import('leaflet').LayerGroup
+  >();
   private layersControl: import('leaflet').Control.Layers | null = null;
 
   /**
@@ -36,7 +67,8 @@ export class LayerService {
 
     const L = await import('leaflet');
 
-    const tileLayersForControl: Record<string, import('leaflet').TileLayer> = {};
+    const tileLayersForControl: Record<string, import('leaflet').TileLayer> =
+      {};
 
     for (const config of BASE_LAYERS) {
       const layer = L.tileLayer(config.url, {
@@ -55,9 +87,14 @@ export class LayerService {
     }
 
     // Initialize overlay layer groups
-    const overlayLayersForControl: Record<string, import('leaflet').LayerGroup> = {};
+    const overlayLayersForControl: Record<
+      string,
+      import('leaflet').LayerGroup
+    > = {};
     for (const overlay of this.overlays()) {
-      const group = L.layerGroup();
+      // Use featureGroup (not layerGroup) — required by leaflet-draw edit toolbar
+      const group =
+        overlay.id === 'drawn-features' ? L.featureGroup() : L.layerGroup();
       this.overlayLayerInstances.set(overlay.id, group);
       overlayLayersForControl[overlay.name] = group;
       if (overlay.visible) {
@@ -113,7 +150,7 @@ export class LayerService {
     }
 
     this.overlays.update((list) =>
-      list.map((o) => (o.id === overlayId ? { ...o, visible: !o.visible } : o))
+      list.map((o) => (o.id === overlayId ? { ...o, visible: !o.visible } : o)),
     );
   }
 
