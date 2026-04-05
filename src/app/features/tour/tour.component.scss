@@ -1,0 +1,353 @@
+// ============================================================
+// OSM Angular GIS - Tour Styles
+// ============================================================
+
+// ── Overlay ────────────────────────────────────────────────
+
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.58);
+  z-index: 9998;
+  cursor: pointer;
+  animation: fadeIn 0.25s ease;
+}
+
+// ── Spotlight ──────────────────────────────────────────────
+
+.tour-spotlight {
+  position: fixed;
+  z-index: 9999;
+  border-radius: 8px;
+  pointer-events: none;
+  // Only show box-shadow when visible (width/height > 0)
+  // display:none causes a flash of the 9999px shadow on some browsers
+  box-shadow:
+    0 0 0 3px #ffffff,
+    0 0 0 6px rgba(255, 255, 255, 0.3),
+    0 0 0 9999px rgba(0, 0, 0, 0.58);
+  transition:
+    top     0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    left    0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    width   0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    height  0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease;
+  animation: spotlightIn 0.3s ease;
+
+  // Hidden state: use opacity + clip instead of display:none
+  &[style*="display: none"],
+  &[style*="display:none"] {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    box-shadow: none !important;
+  }
+}
+
+// ── Tooltip card ───────────────────────────────────────────
+
+.tour-tooltip {
+  position: fixed;
+  z-index: 10001;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.26), 0 2px 8px rgba(0,0,0,0.14);
+  overflow: hidden;
+  animation: tooltipIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: top 0.35s cubic-bezier(0.4,0,0.2,1),
+              left 0.35s cubic-bezier(0.4,0,0.2,1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #ffffff;
+    transform: rotate(45deg);
+    z-index: -1;
+  }
+
+  &[data-arrow='bottom']::before { top: -6px;   left: 50%; margin-left: -6px; }
+  &[data-arrow='top']::before    { bottom: -6px; left: 50%; margin-left: -6px; }
+  &[data-arrow='right']::before  { left: -6px;   top: 50%;  margin-top: -6px;  }
+  &[data-arrow='left']::before   { right: -6px;  top: 50%;  margin-top: -6px;  }
+  &[data-arrow='none']::before   { display: none; }
+
+  .dark-theme & {
+    background: #242424;
+    &::before { background: #242424; }
+  }
+}
+
+// ── Header ─────────────────────────────────────────────────
+
+.tooltip-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 12px 8px;
+}
+
+.step-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1565c0, #1e88e5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(21,101,192,0.4);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: white;
+  }
+}
+
+.step-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-counter {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #1565c0;
+  margin-bottom: 2px;
+
+  .dark-theme & { color: #90caf9; }
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+  color: rgba(0,0,0,0.87);
+
+  .dark-theme & { color: rgba(255,255,255,0.9); }
+}
+
+.close-btn {
+  width: 28px !important;
+  height: 28px !important;
+  flex-shrink: 0;
+  margin-top: -4px;
+  margin-right: -4px;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover { opacity: 1; background: rgba(0,0,0,0.06); }
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+// ── Progress bar ───────────────────────────────────────────
+
+.progress-track {
+  height: 3px;
+  background: rgba(21,101,192,0.1);
+  margin: 0 12px 10px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1565c0, #42a5f5);
+  border-radius: 2px;
+  transition: width 0.45s ease;
+}
+
+// ── Content ────────────────────────────────────────────────
+
+.step-content {
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(0,0,0,0.62);
+  margin: 0;
+  padding: 0 14px 10px;
+
+  .dark-theme & { color: rgba(255,255,255,0.58); }
+}
+
+// ── Dots ───────────────────────────────────────────────────
+
+.step-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 2px 14px 10px;
+  flex-wrap: wrap;
+}
+
+.dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(21,101,192,0.18);
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover  { background: rgba(21,101,192,0.45); transform: scale(1.3); }
+  &.done   { background: rgba(21,101,192,0.45); }
+  &.active { background: #1565c0; width: 20px; border-radius: 4px; }
+}
+
+// ── Navigation ─────────────────────────────────────────────
+
+.tooltip-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 12px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  background: rgba(0,0,0,0.02);
+  gap: 8px;
+
+  .dark-theme & {
+    border-top-color: rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.02);
+  }
+}
+
+// ── Custom nav buttons (no mat-button to avoid styling conflicts) ──
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, transform 0.1s, opacity 0.2s;
+  outline: none;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    line-height: 15px;
+  }
+
+  // ── Anterior ───────────────────────────────────────────
+  &--prev {
+    background: rgba(21,101,192,0.08);
+    color: #1565c0;
+    border: 1.5px solid rgba(21,101,192,0.3);
+    opacity: 1;
+
+    &:hover { background: rgba(21,101,192,0.14); transform: translateX(-2px); }
+
+    .dark-theme & {
+      background: rgba(144,202,249,0.1);
+      color: #90caf9;
+      border-color: rgba(144,202,249,0.25);
+    }
+
+    // Hidden on first step but still occupies space
+    &.nav-btn--hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+
+  // ── Siguiente ──────────────────────────────────────────
+  &--next {
+    background: #1565c0;
+    color: white;
+    font-weight: 600;
+    margin-left: auto;
+    box-shadow: 0 2px 8px rgba(21,101,192,0.35);
+
+    &:hover { background: #1976d2; transform: translateX(2px); }
+
+    // Finish button: green
+    &.nav-btn--finish {
+      background: #2e7d32;
+      box-shadow: 0 2px 8px rgba(46,125,50,0.35);
+      &:hover { background: #388e3c; }
+    }
+  }
+}
+
+// ── Tour trigger button ─────────────────────────────────────
+// Stack (bottom to top, right side):
+//   0px  Leaflet scale
+//  28px  coords bar (left side only)
+//  64px  FAB group starts (locate 56px + optional user-loc 40px)
+// ~168px FAB group top
+// Tour button sits BELOW the FAB group with 12px gap:
+//  64px - 40px(tour height) - 12px(gap) = 12px → use 16px for breathing room
+
+.tour-trigger {
+  position: fixed;
+  bottom: 80px;
+  right: 19px;
+  z-index: 600;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #6a1b9a;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(106, 27, 154, 0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+  pointer-events: all;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 16px rgba(106, 27, 154, 0.55);
+    background: #7b1fa2;
+  }
+
+  @media (max-width: 480px) { bottom: 76px; right: 10px; }
+}
+
+// ── Animations ─────────────────────────────────────────────
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes spotlightIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: scale(0.88) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}

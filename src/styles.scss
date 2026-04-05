@@ -120,6 +120,8 @@ $dark-theme: mat.m2-define-dark-theme((
 html,
 body {
   height: 100%;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 0;
   font-family: 'Roboto', 'Segoe UI', sans-serif;
@@ -278,4 +280,17 @@ body {
 
 .mat-elevation-z4 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+// ── User location pulse animation (global so Leaflet divIcon can use it) ──
+@keyframes location-pulse {
+  0%, 100% { transform: scale(1);   opacity: 1;   }
+  50%       { transform: scale(1.5); opacity: 0.5; }
+}
+
+// ── Leaflet scale control ─────────────────────────────────
+// Scale is bottomleft, sits above coords bar
+.leaflet-bottom.leaflet-left .leaflet-control-scale {
+  margin-bottom: 8px;
+  margin-left: 8px;
 }

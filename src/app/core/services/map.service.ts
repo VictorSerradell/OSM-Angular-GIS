@@ -19,7 +19,11 @@ export class MapService {
 
   // Signals
   readonly mapReady = signal<boolean>(false);
-  readonly coordinates = signal<CoordinatesDisplay>({ lat: 0, lng: 0, zoom: 2 });
+  readonly coordinates = signal<CoordinatesDisplay>({
+    lat: 0,
+    lng: 0,
+    zoom: 2,
+  });
   readonly isLocating = signal<boolean>(false);
   readonly userLocation = signal<L.LatLng | null>(null);
 
@@ -44,6 +48,18 @@ export class MapService {
     // Fix default icon URLs for bundled environments
     this.fixLeafletIcons(L);
 
+    // Destroy existing instance if HMR re-initialized the component
+    if (this._map) {
+      this._map.remove();
+      this._map = null;
+    }
+
+    // Also clean up any Leaflet state left on the container element
+    const containerAny = container as any;
+    if (containerAny._leaflet_id) {
+      delete containerAny._leaflet_id;
+    }
+
     this._map = L.map(container, {
       center: [40.416775, -3.70379], // Madrid by default
       zoom: 6,
@@ -67,7 +83,9 @@ export class MapService {
     });
 
     // Scale control
-    L.control.scale({ imperial: false, metric: true, position: 'bottomright' }).addTo(this._map);
+    L.control
+      .scale({ imperial: false, metric: true, position: 'bottomleft' })
+      .addTo(this._map);
 
     this.mapReady.set(true);
     return this._map;
@@ -86,7 +104,13 @@ export class MapService {
   fitBounds(bbox: [number, number, number, number]): void {
     // bbox from Nominatim: [south, north, west, east]
     const [south, north, west, east] = bbox;
-    this._map?.fitBounds([[south, west], [north, east]], { padding: [20, 20] });
+    this._map?.fitBounds(
+      [
+        [south, west],
+        [north, east],
+      ],
+      { padding: [20, 20] },
+    );
   }
 
   /**
@@ -109,23 +133,38 @@ export class MapService {
         this._userMarker?.remove();
         this._userCircle?.remove();
 
-        // Custom user marker
+        // Custom user marker — fully inline styles for cross-browser compat
         const icon = L.divIcon({
-          className: 'user-location-icon',
-          html: `<div class="user-dot"><div class="user-dot-inner"></div></div>`,
+          className: '',
+          html: `
+            <div style="
+              width:20px;height:20px;border-radius:50%;
+              background:rgba(21,101,192,0.2);
+              display:flex;align-items:center;justify-content:center;
+              animation:location-pulse 2s ease-in-out infinite;
+            ">
+              <div style="
+                width:12px;height:12px;border-radius:50%;
+                background:#1565c0;
+                border:2.5px solid white;
+                box-shadow:0 2px 8px rgba(21,101,192,0.6);
+              "></div>
+            </div>`,
           iconSize: [20, 20],
           iconAnchor: [10, 10],
         });
 
         this._userMarker = L.marker(e.latlng, { icon })
           .addTo(this._map!)
-          .bindPopup(`
+          .bindPopup(
+            `
             <div style="padding:8px">
               <strong>Tu ubicación</strong><br/>
               <small>${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}</small><br/>
               <small>Precisión: ±${Math.round(e.accuracy)}m</small>
             </div>
-          `)
+          `,
+          )
           .openPopup();
 
         this._userCircle = L.circle(e.latlng, {

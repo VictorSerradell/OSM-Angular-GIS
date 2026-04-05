@@ -1,7 +1,6 @@
 // ============================================================
 // OSM Angular GIS - Map Component Shell Styles
-// Only styles for the outermost shell, sidenav, and map container.
-// All tab/sidebar/toolbar styles live in their own components.
+// Cross-browser: Chrome, Firefox, Edge, Safari
 // ============================================================
 
 // ── Shell ──────────────────────────────────────────────────
@@ -9,18 +8,16 @@
 .gis-shell {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  width: 100%;
   overflow: hidden;
   position: relative;
-  background: #f5f5f5;
-  transition: background 0.3s ease;
+  background: #e8e0d8;
 
-  &.dark-theme {
-    background: #121212;
-  }
+  &.dark-theme { background: #2a2a2a; }
 }
 
-// ── Loading Overlay ────────────────────────────────────────
+// ── Loading overlay ────────────────────────────────────────
 
 .loading-overlay {
   position: fixed;
@@ -34,38 +31,43 @@
   gap: 20px;
   backdrop-filter: blur(6px);
 
-  .gis-shell.dark-theme & {
-    background: rgba(18, 18, 18, 0.92);
-  }
+  .gis-shell.dark-theme & { background: rgba(18, 18, 18, 0.92); }
 }
 
 .loading-text {
   font-size: 14px;
-  font-weight: 400;
   color: rgba(0, 0, 0, 0.55);
-  letter-spacing: 0.4px;
   margin: 0;
-
-  .gis-shell.dark-theme & {
-    color: rgba(255, 255, 255, 0.55);
-  }
+  .gis-shell.dark-theme & { color: rgba(255, 255, 255, 0.55); }
 }
 
-// ── Sidenav Container ──────────────────────────────────────
+// ── Sidenav container ──────────────────────────────────────
+// flex: 1 + min-height: 0 is the correct cross-browser pattern
 
 .gis-sidenav-container {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   overflow: hidden;
 
-  ::ng-deep .mat-drawer-container {
-    background: transparent;
+  ::ng-deep {
+    // Force mat-drawer-container to fill the flex parent
+    .mat-drawer-container {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+    }
+    // Prevent Material adding overflow:auto which breaks Firefox
+    .mat-drawer-content {
+      overflow: hidden !important;
+    }
   }
 }
 
-// ── Sidebar ────────────────────────────────────────────────
+// ── Sidebar panel ──────────────────────────────────────────
 
 .gis-sidenav {
-  width: 320px;
+  width: 260px;
   border-right: none !important;
   box-shadow: 2px 0 16px rgba(0, 0, 0, 0.12);
   background: #ffffff;
@@ -78,21 +80,21 @@
     box-shadow: 2px 0 16px rgba(0, 0, 0, 0.35);
   }
 
-  @media (max-width: 768px) {
-    width: 280px;
-  }
-
-  @media (max-width: 480px) {
-    width: 100vw;
-  }
+  @media (max-width: 768px) { width: 240px; }
+  @media (max-width: 480px) { width: 100%; }
 }
 
-// ── Map Area ───────────────────────────────────────────────
+// ── Map sidenav content ────────────────────────────────────
 
 .map-sidenav-content {
   position: relative !important;
   overflow: hidden !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
 }
+
+// ── Leaflet map container ──────────────────────────────────
 
 .leaflet-map-container {
   position: absolute;
@@ -100,7 +102,5 @@
   z-index: 1;
   background: #e8e0d8;
 
-  .gis-shell.dark-theme & {
-    background: #2a2a2a;
-  }
+  .gis-shell.dark-theme & { background: #2a2a2a; }
 }

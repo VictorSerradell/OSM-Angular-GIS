@@ -1,0 +1,72 @@
+<!-- ============================================================
+  OSM Angular GIS - Tour Component
+  ============================================================ -->
+
+@if (tour.active()) {
+
+<div class="tour-overlay" (click)="end()"></div>
+<div class="tour-spotlight" [ngStyle]="spotlightStyle()"></div>
+
+<div class="tour-tooltip" [ngStyle]="tooltipStyle()" [attr.data-arrow]="arrowDir()" (click)="$event.stopPropagation()">
+
+  @if (tour.currentStep(); as step) {
+
+  <!-- Header -->
+  <div class="tooltip-header">
+    <div class="step-icon">
+      <mat-icon>{{ step.icon ?? 'help_outline' }}</mat-icon>
+    </div>
+    <div class="step-meta">
+      <span class="step-counter">PASO {{ tour.currentIndex() + 1 }} DE {{ tour.steps.length }}</span>
+      <h3 class="step-title">{{ step.title }}</h3>
+    </div>
+    <button mat-icon-button class="close-btn" (click)="end()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-track">
+    <div class="progress-fill" [style.width.%]="tour.progress()"></div>
+  </div>
+
+  <!-- Content -->
+  <p class="step-content">{{ step.content }}</p>
+
+  <!-- Step dots -->
+  <div class="step-dots">
+    @for (s of tour.steps; track s.id; let i = $index) {
+    <span class="dot" [class.active]="i === tour.currentIndex()" [class.done]="i < tour.currentIndex()"
+      (click)="goTo(i)">
+    </span>
+    }
+  </div>
+
+  <!-- Navigation -->
+  <div class="tooltip-nav">
+
+    <!-- Anterior: invisible en paso 0, visible y con color en pasos siguientes -->
+    <button class="nav-btn nav-btn--prev" [class.nav-btn--hidden]="tour.isFirst()" (click)="prev()">
+      <mat-icon>arrow_back</mat-icon>
+      Anterior
+    </button>
+
+    <!-- Siguiente / Finalizar -->
+    <button class="nav-btn nav-btn--next" [class.nav-btn--finish]="tour.isLast()" (click)="next()">
+      {{ tour.isLast() ? '¡Finalizar!' : 'Siguiente' }}
+      <mat-icon>{{ tour.isLast() ? 'check_circle' : 'arrow_forward' }}</mat-icon>
+    </button>
+
+  </div>
+
+  }
+</div>
+
+} @else {
+
+<!-- Tour help button — positioned above the locate FAB -->
+<button class="tour-trigger" (click)="start()" matTooltip="Tour guiado" matTooltipPosition="left">
+  <mat-icon>help_outline</mat-icon>
+</button>
+
+}

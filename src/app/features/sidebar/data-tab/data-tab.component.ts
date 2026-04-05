@@ -3,7 +3,7 @@
 // ============================================================
 
 import { Component, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,7 +13,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
 
 import { DrawService } from '../../../core/services/draw.service';
 import { GisFeature } from '../../../core/models/feature.model';
@@ -23,6 +22,7 @@ import { GisFeature } from '../../../core/models/feature.model';
   standalone: true,
   imports: [
     CommonModule,
+    DecimalPipe, // ← needed for | number pipe in template
     FormsModule,
     MatButtonModule,
     MatIconModule,
@@ -31,7 +31,6 @@ import { GisFeature } from '../../../core/models/feature.model';
     MatTooltipModule,
     MatDividerModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
   ],
   templateUrl: './data-tab.component.html',
   styleUrl: './data-tab.component.scss',
@@ -47,7 +46,7 @@ export class DataTabComponent {
 
   readonly featureCount = computed(() => this.drawService.features().length);
 
-  // ── Import / Export ────────────────────────────────────
+  // ── Import / Export ──────────────────────────────────
 
   onFileSelect(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -60,7 +59,9 @@ export class DataTabComponent {
         const json = JSON.parse(e.target?.result as string);
         await this.drawService.importGeoJSON(json);
         const count = json.features?.length ?? 0;
-        this.snackBar.open(`✅ ${count} features importadas`, '', { duration: 3000 });
+        this.snackBar.open(`✅ ${count} features importadas`, '', {
+          duration: 3000,
+        });
       } catch {
         this.snackBar.open('❌ GeoJSON no válido', '', { duration: 3000 });
       } finally {
@@ -72,27 +73,31 @@ export class DataTabComponent {
   }
 
   exportGeoJSON(): void {
-    const geojson = this.drawService.exportGeoJSON();
-    const blob = new Blob([JSON.stringify(geojson, null, 2)], {
-      type: 'application/geo+json',
-    });
+    const blob = new Blob(
+      [JSON.stringify(this.drawService.exportGeoJSON(), null, 2)],
+      { type: 'application/geo+json' },
+    );
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `osm-gis-${new Date().toISOString().slice(0, 10)}.geojson`;
+    const a = Object.assign(document.createElement('a'), {
+      href: url,
+      download: `osm-gis-${new Date().toISOString().slice(0, 10)}.geojson`,
+    });
     a.click();
     URL.revokeObjectURL(url);
     this.snackBar.open('✅ GeoJSON exportado', '', { duration: 2000 });
   }
 
   exportCopy(): void {
-    const geojson = this.drawService.exportGeoJSON();
-    navigator.clipboard.writeText(JSON.stringify(geojson, null, 2)).then(() => {
-      this.snackBar.open('✅ GeoJSON copiado al portapapeles', '', { duration: 2000 });
-    });
+    navigator.clipboard
+      .writeText(JSON.stringify(this.drawService.exportGeoJSON(), null, 2))
+      .then(() =>
+        this.snackBar.open('✅ GeoJSON copiado al portapapeles', '', {
+          duration: 2000,
+        }),
+      );
   }
 
-  // ── Feature management ─────────────────────────────────
+  // ── Feature management ───────────────────────────────
 
   startEdit(feature: GisFeature): void {
     this.editingId.set(feature.properties.id);
@@ -131,7 +136,7 @@ export class DataTabComponent {
     this.snackBar.open('Todas las features eliminadas', '', { duration: 2000 });
   }
 
-  // ── Helpers ────────────────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────
 
   getFeatureIcon(feature: GisFeature): string {
     const map: Record<string, string> = {
