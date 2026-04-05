@@ -6,7 +6,7 @@
 
 import { Injectable, signal, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import type * as L from 'leaflet';
+import * as L from 'leaflet';
 import { CoordinatesDisplay } from '../models/feature.model';
 
 @Injectable({ providedIn: 'root' })
@@ -78,8 +78,7 @@ export class MapService {
   }
 
   private async createMap(container: HTMLElement): Promise<L.Map> {
-    const L = await import('leaflet');
-    this.fixIcons(L);
+    this.fixIcons();
 
     this._map = L.map(container, {
       center: [40.416775, -3.70379],
@@ -131,7 +130,6 @@ export class MapService {
 
   async locateUser(): Promise<void> {
     if (!this._map) return;
-    const L = await import('leaflet');
     this.isLocating.set(true);
 
     return new Promise((resolve, reject) => {
@@ -207,13 +205,21 @@ export class MapService {
     this.mapReady.set(false);
   }
 
-  private fixIcons(L: typeof import('leaflet')): void {
-    const d = L.Icon.Default as any;
-    delete d._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl: 'assets/leaflet/marker-icon-2x.png',
-      iconUrl: 'assets/leaflet/marker-icon.png',
-      shadowUrl: 'assets/leaflet/marker-shadow.png',
-    });
+  private fixIcons(): void {
+    // Production-safe icon fix — L.Icon.Default may be undefined in some ESM builds
+    try {
+      const IconDefault =
+        (L as any).Icon?.Default ?? (L.Icon as any)?.Default ?? L.Icon?.Default;
+      if (IconDefault) {
+        delete IconDefault.prototype._getIconUrl;
+        IconDefault.mergeOptions({
+          iconRetinaUrl: 'assets/leaflet/marker-icon-2x.png',
+          iconUrl: 'assets/leaflet/marker-icon.png',
+          shadowUrl: 'assets/leaflet/marker-shadow.png',
+        });
+      }
+    } catch (e) {
+      console.warn('Leaflet icon fix skipped:', e);
+    }
   }
 }

@@ -3,6 +3,7 @@
 // ============================================================
 
 import { Injectable, signal, inject } from '@angular/core';
+import * as L from 'leaflet';
 import { MapService } from './map.service';
 import {
   BASE_LAYERS,
@@ -64,8 +65,6 @@ export class LayerService {
   async initLayers(): Promise<void> {
     const map = this.mapService.map;
     if (!map) return;
-
-    const L = await import('leaflet');
 
     const tileLayersForControl: Record<string, import('leaflet').TileLayer> =
       {};

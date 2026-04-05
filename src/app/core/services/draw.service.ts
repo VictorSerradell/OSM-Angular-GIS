@@ -3,6 +3,8 @@
 // ============================================================
 
 import { Injectable, signal, inject } from '@angular/core';
+import * as L from 'leaflet';
+import 'leaflet-draw';
 import { MapService } from './map.service';
 import { LayerService } from './layer.service';
 import {
@@ -34,9 +36,6 @@ export class DrawService {
   async initDraw(): Promise<void> {
     const map = this.mapService.map;
     if (!map) return;
-
-    const L = await import('leaflet');
-    await import('leaflet-draw');
 
     const drawnGroup = this.layerService.getOverlayGroup('drawn-features');
     if (!drawnGroup) {
@@ -144,7 +143,6 @@ export class DrawService {
   // ── Programmatic tool activation ─────────────────────
 
   async activateTool(toolType: DrawToolType): Promise<void> {
-    const L = await import('leaflet');
     const LA = L as any;
     const map = this.mapService.map;
     if (!map) return;
@@ -222,7 +220,6 @@ export class DrawService {
   }
 
   async importGeoJSON(geojson: GisFeatureCollection): Promise<void> {
-    const L = await import('leaflet');
     const map = this.mapService.map;
     const drawnGroup = this.layerService.getOverlayGroup('drawn-features');
     if (!map || !drawnGroup) return;
