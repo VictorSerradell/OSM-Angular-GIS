@@ -3,8 +3,15 @@
 // ============================================================
 
 import {
-  Component, OnInit, OnDestroy, AfterViewInit,
-  ViewChild, ElementRef, inject, signal, computed,
+  Component,
+  OnInit,
+  OnDestroy,
+  AfterViewInit,
+  ViewChild,
+  ElementRef,
+  inject,
+  signal,
+  computed,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -14,17 +21,17 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { ToolbarComponent }     from '../toolbar/toolbar.component';
-import { SidebarComponent }     from '../sidebar/sidebar.component';
+import { ToolbarComponent } from '../toolbar/toolbar.component';
+import { SidebarComponent } from '../sidebar/sidebar.component';
 import { MapControlsComponent } from '../map-controls/map-controls.component';
-import { TourComponent }        from '../tour/tour.component';
+import { TourComponent } from '../tour/tour.component';
 
-import { MapService }         from '../../core/services/map.service';
-import { LayerService }       from '../../core/services/layer.service';
-import { DrawService }        from '../../core/services/draw.service';
+import { MapService } from '../../core/services/map.service';
+import { LayerService } from '../../core/services/layer.service';
+import { DrawService } from '../../core/services/draw.service';
 import { MeasurementService } from '../../core/services/measurement.service';
-import { ThemeService }       from '../../core/services/theme.service';
-import { TourService }        from '../tour/tour.service';
+import { ThemeService } from '../../core/services/theme.service';
+import { TourService } from '../tour/tour.service';
 
 @Component({
   selector: 'app-map',
@@ -48,51 +55,30 @@ import { TourService }        from '../tour/tour.service';
 export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('mapContainer') mapContainerRef!: ElementRef<HTMLDivElement>;
 
-  readonly mapService     = inject(MapService);
-  readonly layerService   = inject(LayerService);
-  readonly drawService    = inject(DrawService);
+  readonly mapService = inject(MapService);
+  readonly layerService = inject(LayerService);
+  readonly drawService = inject(DrawService);
   readonly measureService = inject(MeasurementService);
-  readonly themeService   = inject(ThemeService);
-  readonly tourService    = inject(TourService);
-  private readonly snack  = inject(MatSnackBar);
+  readonly themeService = inject(ThemeService);
+  readonly tourService = inject(TourService);
+  private readonly snack = inject(MatSnackBar);
 
-  readonly sidebarOpen      = signal<boolean>(true);
+  readonly sidebarOpen = signal<boolean>(true);
   readonly selectedTabIndex = signal<number>(0);
-  readonly isFullscreen     = signal<boolean>(false);
-  readonly loading          = signal<boolean>(true);
-  readonly featureCount     = computed(() => this.drawService.features().length);
-
-  private initAttempts = 0;
-  private initTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly isFullscreen = signal<boolean>(false);
+  readonly loading = signal<boolean>(true);
+  readonly featureCount = computed(() => this.drawService.features().length);
 
   ngOnInit(): void {
     document.addEventListener('fullscreenchange', () =>
-      this.isFullscreen.set(!!document.fullscreenElement)
+      this.isFullscreen.set(!!document.fullscreenElement),
     );
   }
 
   async ngAfterViewInit(): Promise<void> {
-    // Wait for the container to have real dimensions
-    // This is critical for Vercel/production where CSS may load asynchronously
-    this.waitForContainerThenInit();
-  }
-
-  /** Polls until the map container has non-zero dimensions, then initializes */
-  private waitForContainerThenInit(): void {
-    const container = this.mapContainerRef?.nativeElement;
-    if (!container) return;
-
-    const rect = container.getBoundingClientRect();
-    const hasSize = rect.width > 0 && rect.height > 0;
-
-    if (hasSize || this.initAttempts >= 20) {
-      this.initMap();
-      return;
-    }
-
-    // Container not ready yet — try again after 100ms
-    this.initAttempts++;
-    this.initTimer = setTimeout(() => this.waitForContainerThenInit(), 100);
+    // Small delay to let Angular Material apply its CSS before Leaflet measures the container
+    await new Promise((r) => setTimeout(r, 50));
+    await this.initMap();
   }
 
   private async initMap(): Promise<void> {
@@ -103,25 +89,22 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       await this.drawService.initDraw();
       this.snack.open('✅ Mapa listo', '', { duration: 2000 });
 
-      // Register sidebar tab switcher with TourService
-      this.tourService.registerTabSwitcher((index) => {
-        this.navigateToTab(index);
-      });
+      this.tourService.registerTabSwitcher((i) => this.navigateToTab(i));
 
-      // Auto-start tour on first visit
       if (this.tourService.shouldAutoStart()) {
         setTimeout(() => this.tourService.start(), 1000);
       }
     } catch (err) {
       console.error('Map init error:', err);
-      this.snack.open('❌ Error al cargar el mapa', 'Reintentar', { duration: 5000 });
+      this.snack.open('❌ Error al cargar el mapa', 'Reintentar', {
+        duration: 5000,
+      });
     } finally {
       this.loading.set(false);
     }
   }
 
   ngOnDestroy(): void {
-    if (this.initTimer) clearTimeout(this.initTimer);
     this.mapService.destroy();
     this.measureService.stopTool();
   }
@@ -131,8 +114,12 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mapService.invalidateSize();
   }
 
-  toggleTheme(): void      { this.themeService.toggle(); }
-  toggleFullscreen(): void  { this.mapService.toggleFullscreen(); }
+  toggleTheme(): void {
+    this.themeService.toggle();
+  }
+  toggleFullscreen(): void {
+    this.mapService.toggleFullscreen();
+  }
 
   clearAll(): void {
     this.drawService.clearAll();
@@ -142,7 +129,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   exportGeoJSON(): void {
     const blob = new Blob(
       [JSON.stringify(this.drawService.exportGeoJSON(), null, 2)],
-      { type: 'application/geo+json' }
+      { type: 'application/geo+json' },
     );
     const url = URL.createObjectURL(blob);
     Object.assign(document.createElement('a'), {
@@ -167,5 +154,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  onTabChange(index: number): void { this.selectedTabIndex.set(index); }
+  onTabChange(index: number): void {
+    this.selectedTabIndex.set(index);
+  }
 }
