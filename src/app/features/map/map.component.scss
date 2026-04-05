@@ -44,6 +44,10 @@
 // ── Sidenav container ──────────────────────────────────────
 // flex: 1 + min-height: 0 is the correct cross-browser pattern
 
+// ── Production height fix ──────────────────────────────────
+// In Vercel/production, Angular Material sometimes doesn't
+// apply height correctly. These rules enforce the full height chain.
+
 .gis-sidenav-container {
   flex: 1 1 auto;
   min-height: 0;
@@ -92,6 +96,8 @@
   flex: 1 1 auto !important;
   min-height: 0 !important;
   min-width: 0 !important;
+  // Explicit fallback height for production environments
+  height: 100%;
 }
 
 // ── Leaflet map container ──────────────────────────────────

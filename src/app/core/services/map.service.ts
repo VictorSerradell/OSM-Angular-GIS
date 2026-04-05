@@ -19,11 +19,7 @@ export class MapService {
 
   // Signals
   readonly mapReady = signal<boolean>(false);
-  readonly coordinates = signal<CoordinatesDisplay>({
-    lat: 0,
-    lng: 0,
-    zoom: 2,
-  });
+  readonly coordinates = signal<CoordinatesDisplay>({ lat: 0, lng: 0, zoom: 2 });
   readonly isLocating = signal<boolean>(false);
   readonly userLocation = signal<L.LatLng | null>(null);
 
@@ -83,11 +79,16 @@ export class MapService {
     });
 
     // Scale control
-    L.control
-      .scale({ imperial: false, metric: true, position: 'bottomleft' })
-      .addTo(this._map);
+    L.control.scale({ imperial: false, metric: true, position: 'bottomleft' }).addTo(this._map);
 
     this.mapReady.set(true);
+
+    // In production, CSS may still be applying — invalidate size repeatedly
+    // to ensure Leaflet has correct dimensions
+    [100, 300, 600, 1200].forEach(ms =>
+      setTimeout(() => this._map?.invalidateSize(), ms)
+    );
+
     return this._map;
   }
 
@@ -104,13 +105,7 @@ export class MapService {
   fitBounds(bbox: [number, number, number, number]): void {
     // bbox from Nominatim: [south, north, west, east]
     const [south, north, west, east] = bbox;
-    this._map?.fitBounds(
-      [
-        [south, west],
-        [north, east],
-      ],
-      { padding: [20, 20] },
-    );
+    this._map?.fitBounds([[south, west], [north, east]], { padding: [20, 20] });
   }
 
   /**
@@ -156,15 +151,13 @@ export class MapService {
 
         this._userMarker = L.marker(e.latlng, { icon })
           .addTo(this._map!)
-          .bindPopup(
-            `
+          .bindPopup(`
             <div style="padding:8px">
               <strong>Tu ubicación</strong><br/>
               <small>${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}</small><br/>
               <small>Precisión: ±${Math.round(e.accuracy)}m</small>
             </div>
-          `,
-          )
+          `)
           .openPopup();
 
         this._userCircle = L.circle(e.latlng, {

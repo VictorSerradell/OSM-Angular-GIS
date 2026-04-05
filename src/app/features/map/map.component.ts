@@ -14,10 +14,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { ToolbarComponent }    from '../toolbar/toolbar.component';
-import { SidebarComponent }    from '../sidebar/sidebar.component';
+import { ToolbarComponent }     from '../toolbar/toolbar.component';
+import { SidebarComponent }     from '../sidebar/sidebar.component';
 import { MapControlsComponent } from '../map-controls/map-controls.component';
-import { TourComponent }       from '../tour/tour.component';
+import { TourComponent }        from '../tour/tour.component';
 
 import { MapService }         from '../../core/services/map.service';
 import { LayerService }       from '../../core/services/layer.service';
@@ -62,6 +62,9 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly loading          = signal<boolean>(true);
   readonly featureCount     = computed(() => this.drawService.features().length);
 
+  private initAttempts = 0;
+  private initTimer: ReturnType<typeof setTimeout> | null = null;
+
   ngOnInit(): void {
     document.addEventListener('fullscreenchange', () =>
       this.isFullscreen.set(!!document.fullscreenElement)
@@ -69,6 +72,30 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit(): Promise<void> {
+    // Wait for the container to have real dimensions
+    // This is critical for Vercel/production where CSS may load asynchronously
+    this.waitForContainerThenInit();
+  }
+
+  /** Polls until the map container has non-zero dimensions, then initializes */
+  private waitForContainerThenInit(): void {
+    const container = this.mapContainerRef?.nativeElement;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const hasSize = rect.width > 0 && rect.height > 0;
+
+    if (hasSize || this.initAttempts >= 20) {
+      this.initMap();
+      return;
+    }
+
+    // Container not ready yet — try again after 100ms
+    this.initAttempts++;
+    this.initTimer = setTimeout(() => this.waitForContainerThenInit(), 100);
+  }
+
+  private async initMap(): Promise<void> {
     try {
       this.loading.set(true);
       await this.mapService.initMap(this.mapContainerRef.nativeElement);
@@ -83,9 +110,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Auto-start tour on first visit
       if (this.tourService.shouldAutoStart()) {
-        setTimeout(() => {
-          this.tourService.start();
-        }, 1000);
+        setTimeout(() => this.tourService.start(), 1000);
       }
     } catch (err) {
       console.error('Map init error:', err);
@@ -96,6 +121,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.initTimer) clearTimeout(this.initTimer);
     this.mapService.destroy();
     this.measureService.stopTool();
   }
@@ -105,8 +131,8 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.mapService.invalidateSize();
   }
 
-  toggleTheme(): void     { this.themeService.toggle(); }
-  toggleFullscreen(): void { this.mapService.toggleFullscreen(); }
+  toggleTheme(): void      { this.themeService.toggle(); }
+  toggleFullscreen(): void  { this.mapService.toggleFullscreen(); }
 
   clearAll(): void {
     this.drawService.clearAll();
