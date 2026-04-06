@@ -50,15 +50,19 @@ export class GeocodingService {
             .set('countrycodes', '') // Remove to search globally
             .set('accept-language', 'es,en');
 
+          const headers = {
+            'Accept-Language': 'es,en',
+            'User-Agent': 'OSM-Angular-GIS/1.0',
+          };
           return this.http
-            .get<NominatimResult[]>(this.NOMINATIM_URL, { params })
+            .get<NominatimResult[]>(this.NOMINATIM_URL, { params, headers })
             .pipe(
               catchError((err) => {
                 this.searchError.set('Error al buscar. Intenta de nuevo.');
                 return of([]);
-              })
+              }),
             );
-        })
+        }),
       )
       .subscribe((results) => {
         this.isSearching.set(false);
@@ -100,10 +104,9 @@ export class GeocodingService {
       .set('addressdetails', '1');
 
     return this.http
-      .get<NominatimResult>(
-        'https://nominatim.openstreetmap.org/reverse',
-        { params }
-      )
+      .get<NominatimResult>('https://nominatim.openstreetmap.org/reverse', {
+        params,
+      })
       .toPromise()
       .then((r) => r ?? null)
       .catch(() => null);
