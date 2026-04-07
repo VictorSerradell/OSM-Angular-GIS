@@ -1,5 +1,5 @@
 // ============================================================
-// OSM Angular GIS - Geocoding Service (Nominatim + Overpass)
+// OSM Angular GIS - Geocoding Service (Nominatim jsonv2)
 // ============================================================
 
 import { Injectable, signal, inject } from '@angular/core';
@@ -12,56 +12,50 @@ import {
   of,
 } from 'rxjs';
 import { Subject } from 'rxjs';
-import { NominatimResult, OverpassResponse } from '../models/search.model';
+import { NominatimResult } from '../models/search.model';
 
 @Injectable({ providedIn: 'root' })
 export class GeocodingService {
   private http = inject(HttpClient);
 
-  private readonly NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
-  private readonly OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
+  private readonly URL = 'https://nominatim.openstreetmap.org/search';
 
   readonly searchResults = signal<NominatimResult[]>([]);
   readonly isSearching = signal<boolean>(false);
   readonly searchError = signal<string | null>(null);
+  readonly hasSelection = signal<boolean>(false);
 
-  private searchSubject = new Subject<string>();
+  private sub$ = new Subject<string>();
 
   constructor() {
-    this.searchSubject
+    this.sub$
       .pipe(
-        debounceTime(400),
+        debounceTime(500),
         distinctUntilChanged(),
         switchMap((query) => {
           if (query.trim().length < 3) {
             this.searchResults.set([]);
             this.isSearching.set(false);
-            return of([]);
+            return of([] as NominatimResult[]);
           }
-
           this.isSearching.set(true);
           this.searchError.set(null);
+          this.hasSelection.set(false);
 
           const params = new HttpParams()
             .set('q', query)
-            .set('format', 'json')
+            .set('format', 'jsonv2')
             .set('limit', '8')
             .set('addressdetails', '1')
-            .set('countrycodes', '') // Remove to search globally
+            .set('namedetails', '1')
             .set('accept-language', 'es,en');
 
-          const headers = {
-            'Accept-Language': 'es,en',
-            'User-Agent': 'OSM-Angular-GIS/1.0',
-          };
-          return this.http
-            .get<NominatimResult[]>(this.NOMINATIM_URL, { params, headers })
-            .pipe(
-              catchError((err) => {
-                this.searchError.set('Error al buscar. Intenta de nuevo.');
-                return of([]);
-              }),
-            );
+          return this.http.get<NominatimResult[]>(this.URL, { params }).pipe(
+            catchError(() => {
+              this.searchError.set('Error al buscar. Intenta de nuevo.');
+              return of([] as NominatimResult[]);
+            }),
+          );
         }),
       )
       .subscribe((results) => {
@@ -70,64 +64,8 @@ export class GeocodingService {
       });
   }
 
-  /**
-   * Trigger a search with debounce.
-   */
   search(query: string): void {
-    this.searchSubject.next(query);
-  }
-
-  /**
-   * Direct geocode without debounce.
-   */
-  geocode(query: string): Promise<NominatimResult[]> {
-    const params = new HttpParams()
-      .set('q', query)
-      .set('format', 'json')
-      .set('limit', '5')
-      .set('addressdetails', '1');
-
-    return this.http
-      .get<NominatimResult[]>(this.NOMINATIM_URL, { params })
-      .toPromise()
-      .then((r) => r ?? []);
-  }
-
-  /**
-   * Reverse geocode coordinates.
-   */
-  reverseGeocode(lat: number, lon: number): Promise<NominatimResult | null> {
-    const params = new HttpParams()
-      .set('lat', lat.toString())
-      .set('lon', lon.toString())
-      .set('format', 'json')
-      .set('addressdetails', '1');
-
-    return this.http
-      .get<NominatimResult>('https://nominatim.openstreetmap.org/reverse', {
-        params,
-      })
-      .toPromise()
-      .then((r) => r ?? null)
-      .catch(() => null);
-  }
-
-  /**
-   * Query the Overpass API with custom query.
-   * Replaces {{bbox}} with current map bounds.
-   */
-  overpassQuery(query: string, bbox?: string): Promise<OverpassResponse> {
-    let processedQuery = query;
-    if (bbox) {
-      processedQuery = query.replace('{{bbox}}', bbox);
-    }
-
-    return this.http
-      .post<OverpassResponse>(this.OVERPASS_URL, processedQuery, {
-        headers: { 'Content-Type': 'text/plain' },
-      })
-      .toPromise()
-      .then((r) => r ?? { version: 0, generator: '', elements: [] });
+    this.sub$.next(query);
   }
 
   clearResults(): void {
@@ -135,33 +73,72 @@ export class GeocodingService {
     this.searchError.set(null);
   }
 
-  /**
-   * Format display name to be shorter.
-   */
-  formatDisplayName(name: string): string {
-    const parts = name.split(',');
-    return parts.slice(0, 3).join(',').trim();
+  markSelected(): void {
+    this.hasSelection.set(true);
+    this.clearResults();
   }
 
-  /**
-   * Get icon name for a Nominatim result type.
-   */
-  getResultIcon(result: NominatimResult): string {
+  // ── Display helpers ───────────────────────────────────
+
+  /** Primary display name: uses 'name' field (short), falls back to display_name */
+  getName(r: NominatimResult): string {
+    // 'name' is the short local name (e.g. "Madrid")
+    if (r.name && r.name.trim()) return r.name.trim();
+    // display_name is the full address string
+    const dn = r.display_name ?? '';
+    const part = dn.split(',')[0].trim();
+    return part || dn || `${r.lat}, ${r.lon}`;
+  }
+
+  /** Secondary line: country/region from display_name */
+  getSubtitle(r: NominatimResult): string {
+    const dn = r.display_name ?? '';
+    const parts = dn
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    // Skip first part (that's the name), show next 2
+    return parts.slice(1, 3).join(', ');
+  }
+
+  /** Category label shown as badge */
+  getCategory(r: NominatimResult): string {
+    // jsonv2 uses 'category', fall back to 'type'
+    const cat = (r as any).category ?? r.type ?? '';
+    const labels: Record<string, string> = {
+      administrative: 'Admin',
+      place: 'Lugar',
+      boundary: 'Límite',
+      highway: 'Vía',
+      amenity: 'Servicio',
+      natural: 'Natural',
+      building: 'Edificio',
+      landuse: 'Territorio',
+    };
+    return labels[cat] ?? cat;
+  }
+
+  /** Icon for result type */
+  getIcon(r: NominatimResult): string {
+    const cat = (r as any).category ?? r.type ?? '';
+    const map: Record<string, string> = {
+      administrative: 'account_balance',
+      place: 'place',
+      boundary: 'map',
+      highway: 'add_road',
+      amenity: 'local_cafe',
+      natural: 'park',
+      building: 'business',
+      landuse: 'terrain',
+    };
     const typeMap: Record<string, string> = {
       city: 'location_city',
       town: 'location_city',
       village: 'home',
-      road: 'add_road',
-      street: 'add_road',
       country: 'flag',
       state: 'map',
       postcode: 'markunread_mailbox',
-      amenity: 'place',
-      building: 'business',
-      restaurant: 'restaurant',
-      hospital: 'local_hospital',
-      school: 'school',
     };
-    return typeMap[result.type] ?? typeMap[result.class] ?? 'place';
+    return typeMap[r.type] ?? map[cat] ?? 'place';
   }
 }

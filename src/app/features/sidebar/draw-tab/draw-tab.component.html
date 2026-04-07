@@ -1,11 +1,12 @@
-<!-- draw-tab.component.html — VERSION FINAL — NO contiene tools.find() -->
+<!-- OSM Angular GIS - Draw Tab -->
 <div class="tab-content">
 
   <p class="tab-description">
-    Selecciona una herramienta y dibuja directamente sobre el mapa.
-    Las features aparecen también en la pestaña <strong>Datos</strong>.
+    Selecciona una herramienta y dibuja sobre el mapa.
+    Las features aparecen en la pestaña <strong>Datos</strong>.
   </p>
 
+  <!-- Tool grid -->
   <div class="tools-grid">
     @for (tool of tools; track tool.id) {
     <button mat-raised-button class="tool-btn" [class.active]="drawService.activeDrawTool() === tool.id"
@@ -18,18 +19,29 @@
     }
   </div>
 
+  <!-- Active tool instructions -->
   @if (drawService.activeDrawTool(); as activeTool) {
   <div class="active-indicator">
     <div class="indicator-dot"></div>
-    <span>
-      <strong>{{ getToolLabel(activeTool) }}</strong>
-      activo — clic en el mapa para dibujar. Doble clic para finalizar.
-    </span>
+    <div class="indicator-text">
+      <strong>{{ getToolLabel(activeTool) }}</strong> activo
+      <div class="indicator-hint">{{ getToolHint(activeTool) }}</div>
+    </div>
   </div>
   }
 
   <mat-divider></mat-divider>
 
+  <!-- Native controls note -->
+  <div class="info-box">
+    <mat-icon>info_outline</mat-icon>
+    <p>
+      Los controles nativos <strong>(esquina superior izquierda del mapa)</strong>
+      permiten editar y eliminar features existentes.
+    </p>
+  </div>
+
+  <!-- Stats -->
   <div class="stats-row">
     <div class="stat-box">
       <span class="stat-val">{{ featureCount() }}</span>
@@ -41,15 +53,7 @@
     </div>
   </div>
 
-  <div class="info-box">
-    <mat-icon>info_outline</mat-icon>
-    <p>
-      También puedes usar los controles nativos de Leaflet Draw
-      <strong>(esquina superior izquierda del mapa)</strong>
-      para editar y eliminar features.
-    </p>
-  </div>
-
+  <!-- Clear all -->
   @if (featureCount() > 0) {
   <button mat-stroked-button color="warn" class="clear-btn" (click)="clearAll()">
     <mat-icon>delete_sweep</mat-icon>

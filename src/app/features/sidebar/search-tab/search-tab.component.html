@@ -1,116 +1,83 @@
-<!-- ============================================================
-  OSM Angular GIS - Search Tab Template
-  ============================================================ -->
-
 <div class="tab-content">
+  <p class="tab-description">Busca lugares usando Nominatim / OpenStreetMap.</p>
 
-  <p class="tab-description">
-    Busca lugares, direcciones y coordenadas usando Nominatim / OpenStreetMap.
-  </p>
-
-  <!-- Search input -->
+  <!-- Input -->
   <mat-form-field class="search-field" appearance="outline">
     <mat-label>Buscar lugar, dirección…</mat-label>
     <mat-icon matPrefix>search</mat-icon>
-    <input
-      matInput
-      [value]="searchQuery()"
-      (input)="onInput($event)"
-      placeholder="ej: Calle Gran Vía, Madrid"
-      autocomplete="off"
-      spellcheck="false"
-    />
-    @if (geocodingService.isSearching()) {
-      <mat-spinner matSuffix diameter="18"></mat-spinner>
-    } @else if (searchQuery().length > 0) {
-      <button matSuffix mat-icon-button (click)="clearSearch()" matTooltip="Limpiar">
-        <mat-icon>close</mat-icon>
-      </button>
+    <input matInput [value]="query()" (input)="onInput($event)" placeholder="ej: Madrid, España" autocomplete="off"
+      spellcheck="false" />
+    @if (geo.isSearching()) {
+    <mat-spinner matSuffix diameter="18"></mat-spinner>
+    } @else if (query().length > 0) {
+    <button matSuffix mat-icon-button (click)="clear()">
+      <mat-icon>close</mat-icon>
+    </button>
     }
-    @if (geocodingService.searchError()) {
-      <mat-error>{{ geocodingService.searchError() }}</mat-error>
-    }
+    @if (geo.searchError()) { <mat-error>{{ geo.searchError() }}</mat-error> }
   </mat-form-field>
 
-  <!-- Quick search chips -->
-  @if (searchQuery().length === 0) {
-    <div class="quick-searches">
-      <span class="quick-label">Accesos rápidos:</span>
-      <mat-chip-set>
-        @for (qs of quickSearches; track qs.label) {
-          <mat-chip (click)="onQuickSearch(qs.query)">
-            {{ qs.label }}
-          </mat-chip>
-        }
-      </mat-chip-set>
-    </div>
-  }
-
-  <!-- Search results -->
-  @if (geocodingService.searchResults().length > 0) {
-    <div class="results-header">
-      <span>{{ geocodingService.searchResults().length }} resultados</span>
-    </div>
-    <mat-list class="search-results">
-      @for (result of geocodingService.searchResults(); track result.place_id) {
-        <mat-list-item class="result-item" (click)="onSelect(result)">
-          <mat-icon matListItemIcon>
-            {{ geocodingService.getResultIcon(result) }}
-          </mat-icon>
-          <div matListItemTitle class="result-name">
-            {{ result.display_name.split(',')[0] }}
-          </div>
-          <div matListItemLine class="result-path">
-            {{ result.display_name.split(',').slice(1, 3).join(', ') }}
-          </div>
-          <span matListItemMeta class="result-type">{{ result.type }}</span>
-        </mat-list-item>
-        <mat-divider></mat-divider>
+  <!-- Quick chips -->
+  @if (query().length === 0) {
+  <div class="quick-searches">
+    <span class="quick-label">Accesos rápidos:</span>
+    <mat-chip-set>
+      @for (qs of quick; track qs.label) {
+      <mat-chip (click)="onQuick(qs.q)">{{ qs.label }}</mat-chip>
       }
-    </mat-list>
+    </mat-chip-set>
+  </div>
   }
 
-  <!-- No results -->
-  @if (!geocodingService.isSearching()
-    && searchQuery().length >= 3
-    && geocodingService.searchResults().length === 0
-    && !geocodingService.searchError()) {
-    <div class="empty-state">
-      <mat-icon>search_off</mat-icon>
-      <p>Sin resultados para<br><strong>"{{ searchQuery() }}"</strong></p>
-    </div>
+  <!-- Results -->
+  @if (geo.searchResults().length > 0) {
+  <div class="results-header">{{ geo.searchResults().length }} resultados</div>
+  <mat-list class="search-results">
+    @for (r of geo.searchResults(); track r.place_id) {
+    <mat-list-item class="result-item" (click)="onSelect(r)">
+      <mat-icon matListItemIcon>{{ geo.getIcon(r) }}</mat-icon>
+      <div matListItemTitle class="result-name">{{ geo.getName(r) }}</div>
+      <div matListItemLine class="result-path">{{ geo.getSubtitle(r) }}</div>
+      <span matListItemMeta class="result-type">{{ geo.getCategory(r) }}</span>
+    </mat-list-item>
+    <mat-divider></mat-divider>
+    }
+  </mat-list>
+  }
+
+  <!-- Empty state — only when actively searching and no results -->
+  @if (!geo.isSearching() && !geo.hasSelection()
+  && query().length >= 3 && geo.searchResults().length === 0
+  && !geo.searchError()) {
+  <div class="empty-state">
+    <mat-icon>search_off</mat-icon>
+    <p>Sin resultados para <strong>"{{ query() }}"</strong></p>
+  </div>
   }
 
   <!-- Hint -->
-  @if (searchQuery().length === 0) {
-    <div class="hint-box">
-      <mat-icon>info_outline</mat-icon>
-      <p>Escribe al menos 3 caracteres para buscar en OpenStreetMap.</p>
-    </div>
+  @if (query().length === 0) {
+  <div class="hint-box">
+    <mat-icon>info_outline</mat-icon>
+    <p>Escribe al menos 3 caracteres para buscar en OpenStreetMap.</p>
+  </div>
   }
 
-  <!-- Recent searches -->
-  @if (recentSearches().length > 0 && searchQuery().length === 0) {
-    <mat-divider></mat-divider>
-    <div class="recent-header">
-      <span class="recent-title">Búsquedas recientes</span>
-      <button mat-icon-button (click)="clearRecent()" matTooltip="Borrar historial">
-        <mat-icon>delete_outline</mat-icon>
-      </button>
-    </div>
-    <mat-list class="recent-list">
-      @for (result of recentSearches(); track result.place_id) {
-        <mat-list-item class="result-item" (click)="onSelect(result)">
-          <mat-icon matListItemIcon>history</mat-icon>
-          <div matListItemTitle class="result-name">
-            {{ result.display_name.split(',')[0] }}
-          </div>
-          <div matListItemLine class="result-path">
-            {{ result.display_name.split(',').slice(1, 2).join('') }}
-          </div>
-        </mat-list-item>
-      }
-    </mat-list>
+  <!-- Recent -->
+  @if (recent().length > 0 && query().length === 0) {
+  <mat-divider></mat-divider>
+  <div class="recent-header">
+    <span class="recent-title">Recientes</span>
+    <button mat-icon-button (click)="clearRecent()"><mat-icon>delete_outline</mat-icon></button>
+  </div>
+  <mat-list class="recent-list">
+    @for (r of recent(); track r.place_id) {
+    <mat-list-item class="result-item" (click)="onSelect(r)">
+      <mat-icon matListItemIcon>history</mat-icon>
+      <div matListItemTitle class="result-name">{{ geo.getName(r) }}</div>
+      <div matListItemLine class="result-path">{{ geo.getSubtitle(r) }}</div>
+    </mat-list-item>
+    }
+  </mat-list>
   }
-
 </div>

@@ -4,19 +4,20 @@
 
 export interface NominatimResult {
   place_id: number;
-  licence: string;
   osm_type: string;
   osm_id: number;
   boundingbox: string[];
   lat: string;
   lon: string;
   display_name: string;
-  class: string;
+  name: string; // short place name (always present in jsonv2)
+  place_rank: number;
+  category: string; // jsonv2 uses 'category' not 'class'
   type: string;
   importance: number;
   icon?: string;
-  address?: NominatimAddress;
-  geojson?: unknown;
+  address?: Record<string, string>;
+  namedetails?: Record<string, string>;
 }
 
 export interface NominatimAddress {
@@ -53,9 +54,6 @@ export interface OverpassElement {
   lat?: number;
   lon?: number;
   tags?: Record<string, string>;
-  nodes?: number[];
-  members?: unknown[];
-  geometry?: Array<{ lat: number; lon: number }>;
 }
 
 export interface OverpassResponse {

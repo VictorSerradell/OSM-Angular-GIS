@@ -19,6 +19,7 @@ interface DrawTool {
   icon: string;
   tooltip: string;
   description: string;
+  hint: string; // instruction shown when active
 }
 
 @Component({
@@ -36,7 +37,7 @@ interface DrawTool {
 })
 export class DrawTabComponent {
   readonly drawService = inject(DrawService);
-  private readonly snackBar = inject(MatSnackBar);
+  private readonly snack = inject(MatSnackBar);
 
   readonly featureCount = computed(() => this.drawService.features().length);
 
@@ -47,6 +48,7 @@ export class DrawTabComponent {
       icon: 'room',
       tooltip: 'Colocar un marcador',
       description: 'Punto de interés',
+      hint: 'Haz clic en el mapa para colocar el marcador.',
     },
     {
       id: 'polyline',
@@ -54,6 +56,7 @@ export class DrawTabComponent {
       icon: 'timeline',
       tooltip: 'Dibujar una línea',
       description: 'Camino o ruta',
+      hint: 'Clic para añadir puntos. Doble clic para finalizar.',
     },
     {
       id: 'polygon',
@@ -61,6 +64,7 @@ export class DrawTabComponent {
       icon: 'hexagon',
       tooltip: 'Dibujar un polígono',
       description: 'Área cerrada',
+      hint: 'Clic para añadir vértices. Clic en el primer punto para cerrar.',
     },
     {
       id: 'rectangle',
@@ -68,6 +72,7 @@ export class DrawTabComponent {
       icon: 'rectangle',
       tooltip: 'Dibujar un rectángulo',
       description: 'Zona cuadrada',
+      hint: 'Clic y arrastra para dibujar el rectángulo.',
     },
     {
       id: 'circle',
@@ -75,32 +80,36 @@ export class DrawTabComponent {
       icon: 'circle',
       tooltip: 'Dibujar un círculo',
       description: 'Área circular',
+      hint: 'Clic en el centro y arrastra para definir el radio.',
     },
     {
       id: 'circlemarker',
       label: 'Punto',
       icon: 'fiber_manual_record',
-      tooltip: 'Colocar un punto fijo',
+      tooltip: 'Punto fijo en el mapa',
       description: 'Punto pequeño',
+      hint: 'Haz clic en el mapa para colocar el punto.',
     },
   ];
 
-  /** Used in template to avoid arrow functions inside {{ }} */
   getToolLabel(id: DrawToolType): string {
     return this.tools.find((t) => t.id === id)?.label ?? id;
   }
 
+  getToolHint(id: DrawToolType): string {
+    return this.tools.find((t) => t.id === id)?.hint ?? '';
+  }
+
   activateTool(toolId: DrawToolType): void {
     this.drawService.activateTool(toolId);
-    this.snackBar.open(
-      `${this.getToolLabel(toolId)} activo — haz clic en el mapa`,
-      'OK',
-      { duration: 3000 },
-    );
+    const hint = this.getToolHint(toolId);
+    this.snack.open(`${this.getToolLabel(toolId)}: ${hint}`, 'OK', {
+      duration: 4000,
+    });
   }
 
   clearAll(): void {
     this.drawService.clearAll();
-    this.snackBar.open('Todas las features eliminadas', '', { duration: 2000 });
+    this.snack.open('Todas las features eliminadas', '', { duration: 2000 });
   }
 }

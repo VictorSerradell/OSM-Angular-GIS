@@ -1,10 +1,10 @@
 // ============================================================
-// OSM Angular GIS - Draw Service (Leaflet Draw)
+// OSM Angular GIS - Draw Service
+// Production-safe: leaflet-draw loaded dynamically after Leaflet
 // ============================================================
 
 import { Injectable, signal, inject } from '@angular/core';
 import * as L from 'leaflet';
-import 'leaflet-draw';
 import { MapService } from './map.service';
 import { LayerService } from './layer.service';
 import {
@@ -13,7 +13,6 @@ import {
   DrawToolType,
 } from '../models/feature.model';
 
-/** Simple unique-id generator — no external dependency needed */
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
@@ -27,33 +26,42 @@ export class DrawService {
   readonly activeDrawTool = signal<DrawToolType | null>(null);
   readonly drawnLayerCount = signal<number>(0);
 
-  // drawControl typed as `any` — leaflet-draw typings are incomplete
   private drawControl: any = null;
   private featureLayerMap = new Map<string, any>();
+  private LA: any = null; // leaflet + leaflet-draw extended object
 
-  // ── Init ────────────────────────────────────────────────
+  // ── Init ──────────────────────────────────────────────
 
   async initDraw(): Promise<void> {
     const map = this.mapService.map;
     if (!map) return;
 
+    // Load leaflet-draw dynamically AFTER leaflet is ready
+    // This guarantees L.Draw and L.Control.Draw exist
+    await import('leaflet-draw');
+
+    // Give the browser one tick to process the side-effect import
+    await new Promise((r) => setTimeout(r, 0));
+
+    this.LA = L as any;
+
+    // Validate leaflet-draw loaded correctly
+    if (!this.LA.Control?.Draw) {
+      console.error('leaflet-draw did not load correctly');
+      return;
+    }
+    if (!this.LA.Draw?.Event) {
+      console.error('L.Draw.Event not available');
+      return;
+    }
+
     const drawnGroup = this.layerService.getOverlayGroup('drawn-features');
     if (!drawnGroup) {
-      console.error(
-        'DrawService: drawn-features overlay not found. initLayers() must run first.',
-      );
-      return;
-    }
-    // Verify it's a FeatureGroup (leaflet-draw requirement)
-    if (typeof (drawnGroup as any).getLayers !== 'function') {
-      console.error('DrawService: drawn-features must be a L.FeatureGroup');
+      console.error('drawn-features overlay not found');
       return;
     }
 
-    // Cast L to any so we can access L.Control.Draw added by leaflet-draw
-    const LA = L as any;
-
-    this.drawControl = new LA.Control.Draw({
+    this.drawControl = new this.LA.Control.Draw({
       position: 'topleft',
       draw: {
         polyline: { shapeOptions: { color: '#1565c0', weight: 3 } },
@@ -87,12 +95,10 @@ export class DrawService {
 
     this.drawControl.addTo(map);
 
-    // ── Event: feature created ──────────────────────────
-    map.on(LA.Draw.Event.CREATED, (e: any) => {
+    map.on(this.LA.Draw.Event.CREATED, (e: any) => {
       const layer = e.layer;
-      const drawType = e.layerType as DrawToolType;
-      const feature = this.layerToGeoJSON(layer, drawType);
-
+      const type = e.layerType as DrawToolType;
+      const feature = this.layerToGeoJSON(layer, type);
       if (feature) {
         drawnGroup.addLayer(layer);
         this.featureLayerMap.set(feature.properties.id, layer);
@@ -103,8 +109,7 @@ export class DrawService {
       }
     });
 
-    // ── Event: feature edited ───────────────────────────
-    map.on(LA.Draw.Event.EDITED, (e: any) => {
+    map.on(this.LA.Draw.Event.EDITED, (e: any) => {
       e.layers.eachLayer((layer: any) => {
         const id = layer._gisId as string | undefined;
         if (id) {
@@ -125,8 +130,7 @@ export class DrawService {
       });
     });
 
-    // ── Event: feature deleted ──────────────────────────
-    map.on(LA.Draw.Event.DELETED, (e: any) => {
+    map.on(this.LA.Draw.Event.DELETED, (e: any) => {
       e.layers.eachLayer((layer: any) => {
         const id = layer._gisId as string | undefined;
         if (id) {
@@ -140,28 +144,57 @@ export class DrawService {
     });
   }
 
-  // ── Programmatic tool activation ─────────────────────
+  // ── Programmatic tool activation ──────────────────────
 
-  async activateTool(toolType: DrawToolType): Promise<void> {
-    const LA = L as any;
+  activateTool(toolType: DrawToolType): void {
     const map = this.mapService.map;
-    if (!map) return;
+    if (!map || !this.LA) {
+      console.warn('Map or leaflet-draw not ready');
+      return;
+    }
 
-    const toolMap: Record<DrawToolType, any> = {
-      polyline: LA.Draw?.Polyline,
-      polygon: LA.Draw?.Polygon,
-      rectangle: LA.Draw?.Rectangle,
-      circle: LA.Draw?.Circle,
-      marker: LA.Draw?.Marker,
-      circlemarker: LA.Draw?.CircleMarker,
+    const shape = {
+      color: '#1565c0',
+      weight: 2,
+      fillColor: '#1565c0',
+      fillOpacity: 0.2,
     };
 
-    const ToolClass = toolMap[toolType];
-    if (ToolClass) {
-      new ToolClass(map, {
-        shapeOptions: { color: '#1565c0', weight: 2, fillOpacity: 0.2 },
-      }).enable();
+    const toolConfigs: Record<DrawToolType, { cls: any; opts: any }> = {
+      marker: { cls: this.LA.Draw?.Marker, opts: {} },
+      circlemarker: {
+        cls: this.LA.Draw?.CircleMarker,
+        opts: { color: '#1565c0', radius: 8 },
+      },
+      polyline: {
+        cls: this.LA.Draw?.Polyline,
+        opts: { shapeOptions: { ...shape, fillOpacity: 0 } },
+      },
+      polygon: {
+        cls: this.LA.Draw?.Polygon,
+        opts: { allowIntersection: false, shapeOptions: shape },
+      },
+      rectangle: {
+        cls: this.LA.Draw?.Rectangle,
+        opts: { shapeOptions: shape },
+      },
+      circle: { cls: this.LA.Draw?.Circle, opts: { shapeOptions: shape } },
+    };
+
+    const cfg = toolConfigs[toolType];
+    if (!cfg?.cls) {
+      console.warn(
+        `Draw tool class not available: ${toolType}. leaflet-draw loaded:`,
+        !!this.LA.Draw,
+      );
+      return;
+    }
+
+    try {
+      new cfg.cls(map, cfg.opts).enable();
       this.activeDrawTool.set(toolType);
+    } catch (e) {
+      console.error('activateTool error:', toolType, e);
     }
   }
 
@@ -200,7 +233,6 @@ export class DrawService {
     const layer = this.featureLayerMap.get(id);
     const map = this.mapService.map;
     if (!layer || !map) return;
-
     if (typeof layer.getBounds === 'function') {
       map.flyToBounds(layer.getBounds(), { padding: [40, 40] });
     } else if (typeof layer.getLatLng === 'function') {
@@ -224,7 +256,7 @@ export class DrawService {
     const drawnGroup = this.layerService.getOverlayGroup('drawn-features');
     if (!map || !drawnGroup) return;
 
-    const geoLayer = (L as any).geoJSON(geojson, {
+    (L as any).geoJSON(geojson, {
       style: (feature: any) => ({
         color: feature?.properties?.color ?? '#1565c0',
         weight: feature?.properties?.weight ?? 2,
@@ -238,7 +270,6 @@ export class DrawService {
           createdAt: feature.properties?.createdAt ?? new Date().toISOString(),
         };
         layer._gisId = id;
-
         const gisFeature: GisFeature = {
           type: 'Feature',
           geometry: feature.geometry,
@@ -252,9 +283,10 @@ export class DrawService {
     });
 
     try {
+      const geoLayer = (L as any).geoJSON(geojson);
       map.fitBounds(geoLayer.getBounds(), { padding: [20, 20] });
     } catch {
-      /* empty */
+      /* empty bounds */
     }
   }
 
@@ -324,12 +356,10 @@ export class DrawService {
       `
       <div style="min-width:170px;padding:8px">
         <div style="font-weight:600;font-size:14px;margin-bottom:4px">${p.name}</div>
-        ${p.description ? `<div style="font-size:12px;color:#666;margin-bottom:4px">${p.description}</div>` : ''}
-        <div style="font-size:11px;color:#999">
+        ${p.description ? `<div style="font-size:12px;color:#666">${p.description}</div>` : ''}
+        <div style="font-size:11px;color:#999;margin-top:4px">
           <div>Tipo: ${p.drawType ?? '—'}</div>
           ${p.radius ? `<div>Radio: ${p.radius.toFixed(0)} m</div>` : ''}
-          ${p.area ? `<div>Área: ${(p.area / 1e6).toFixed(4)} km²</div>` : ''}
-          <div>Creado: ${new Date(p.createdAt).toLocaleDateString()}</div>
         </div>
       </div>`,
       { className: 'gis-popup' },

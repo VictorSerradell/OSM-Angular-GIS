@@ -1,7 +1,3 @@
-// ============================================================
-// OSM Angular GIS - Search Tab Component
-// ============================================================
-
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,7 +8,6 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
-
 import { GeocodingService } from '../../../core/services/geocoding.service';
 import { MapService } from '../../../core/services/map.service';
 import { NominatimResult } from '../../../core/models/search.model';
@@ -35,72 +30,56 @@ import { NominatimResult } from '../../../core/models/search.model';
   styleUrl: './search-tab.component.scss',
 })
 export class SearchTabComponent {
-  readonly geocodingService = inject(GeocodingService);
-  readonly mapService       = inject(MapService);
+  readonly geo = inject(GeocodingService);
+  readonly map = inject(MapService);
 
-  readonly searchQuery    = signal<string>('');
-  readonly recentSearches = signal<NominatimResult[]>([]);
+  readonly query = signal<string>('');
+  readonly recent = signal<NominatimResult[]>([]);
 
-  // Flag to prevent re-triggering search after selection
-  private _skipNextSearch = false;
+  private _skip = false;
 
-  readonly quickSearches = [
-    { label: 'Madrid',    query: 'Madrid, España'     },
-    { label: 'Barcelona', query: 'Barcelona, España'  },
-    { label: 'París',     query: 'París, Francia'     },
-    { label: 'Londres',   query: 'Londres, Reino Unido' },
+  readonly quick = [
+    { label: 'Madrid', q: 'Madrid España' },
+    { label: 'Barcelona', q: 'Barcelona España' },
+    { label: 'París', q: 'Paris France' },
+    { label: 'Londres', q: 'London United Kingdom' },
   ];
 
-  onInput(event: Event): void {
-    if (this._skipNextSearch) {
-      this._skipNextSearch = false;
+  onInput(e: Event): void {
+    if (this._skip) {
+      this._skip = false;
       return;
     }
-    const value = (event.target as HTMLInputElement).value;
-    this.searchQuery.set(value);
-    this.geocodingService.search(value);
+    const v = (e.target as HTMLInputElement).value;
+    this.query.set(v);
+    this.geo.search(v);
   }
 
-  onSelect(result: NominatimResult): void {
-    // Navigate map
-    const bb = result.boundingbox;
+  onSelect(r: NominatimResult): void {
+    const bb = r.boundingbox;
     if (bb?.length === 4) {
-      this.mapService.fitBounds([
-        parseFloat(bb[0]), parseFloat(bb[1]),
-        parseFloat(bb[2]), parseFloat(bb[3]),
-      ]);
+      this.map.fitBounds([+bb[0], +bb[1], +bb[2], +bb[3]]);
     } else {
-      this.mapService.flyTo(parseFloat(result.lat), parseFloat(result.lon), 15);
+      this.map.flyTo(+r.lat, +r.lon, 13);
     }
-
-    // Update recent searches
-    this.recentSearches.update((prev) => {
-      const filtered = prev.filter(r => r.place_id !== result.place_id);
-      return [result, ...filtered].slice(0, 5);
-    });
-
-    // Set the display name WITHOUT triggering a new search
-    this._skipNextSearch = true;
-    const shortName = result.display_name.split(',')[0];
-    this.searchQuery.set(shortName);
-
-    // Clear results after a small delay so the user sees the selection
-    setTimeout(() => {
-      this.geocodingService.clearResults();
-    }, 100);
+    this.recent.update((p) =>
+      [r, ...p.filter((x) => x.place_id !== r.place_id)].slice(0, 5),
+    );
+    this._skip = true;
+    this.query.set(this.geo.getName(r));
+    this.geo.markSelected();
   }
 
-  onQuickSearch(query: string): void {
-    this.searchQuery.set(query);
-    this.geocodingService.search(query);
+  onQuick(q: string): void {
+    this.query.set(q);
+    this.geo.search(q);
   }
 
-  clearSearch(): void {
-    this.searchQuery.set('');
-    this.geocodingService.clearResults();
+  clear(): void {
+    this.query.set('');
+    this.geo.clearResults();
   }
-
   clearRecent(): void {
-    this.recentSearches.set([]);
+    this.recent.set([]);
   }
 }
