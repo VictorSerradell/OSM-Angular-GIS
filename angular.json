@@ -46,7 +46,18 @@
               "node_modules/leaflet-draw/dist/leaflet.draw.css",
               "src/styles.scss"
             ],
-            "scripts": [],
+            "scripts": [
+              {
+                "input": "node_modules/leaflet/dist/leaflet.js",
+                "bundleName": "leaflet",
+                "inject": true
+              },
+              {
+                "input": "node_modules/leaflet-draw/dist/leaflet.draw.js",
+                "bundleName": "leaflet-draw",
+                "inject": true
+              }
+            ],
             "allowedCommonJsDependencies": [
               "leaflet",
               "leaflet-draw",

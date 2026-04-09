@@ -3,7 +3,7 @@
 // ============================================================
 
 import { Injectable, signal, inject } from '@angular/core';
-import * as L from 'leaflet';
+declare const L: any;
 import { MapService } from './map.service';
 import {
   BASE_LAYERS,
@@ -52,12 +52,9 @@ export class LayerService {
     },
   ]);
 
-  private tileLayerInstances = new Map<string, import('leaflet').TileLayer>();
-  private overlayLayerInstances = new Map<
-    string,
-    import('leaflet').LayerGroup
-  >();
-  private layersControl: import('leaflet').Control.Layers | null = null;
+  private tileLayerInstances = new Map<string, any>();
+  private overlayLayerInstances = new Map<string, any>();
+  private layersControl: any = null;
 
   /**
    * Initialize all tile layers and add the default one to the map.
@@ -66,8 +63,7 @@ export class LayerService {
     const map = this.mapService.map;
     if (!map) return;
 
-    const tileLayersForControl: Record<string, import('leaflet').TileLayer> =
-      {};
+    const tileLayersForControl: Record<string, any> = {};
 
     for (const config of BASE_LAYERS) {
       const layer = L.tileLayer(config.url, {
@@ -86,10 +82,7 @@ export class LayerService {
     }
 
     // Initialize overlay layer groups
-    const overlayLayersForControl: Record<
-      string,
-      import('leaflet').LayerGroup
-    > = {};
+    const overlayLayersForControl: Record<string, any> = {};
     for (const overlay of this.overlays()) {
       // Use featureGroup (not layerGroup) — required by leaflet-draw edit toolbar
       const group =
@@ -156,14 +149,14 @@ export class LayerService {
   /**
    * Get a specific overlay layer group.
    */
-  getOverlayGroup(overlayId: string): import('leaflet').LayerGroup | undefined {
+  getOverlayGroup(overlayId: string): any {
     return this.overlayLayerInstances.get(overlayId);
   }
 
   /**
    * Get all overlay groups.
    */
-  getAllOverlayGroups(): Map<string, import('leaflet').LayerGroup> {
+  getAllOverlayGroups(): Map<string, any> {
     return this.overlayLayerInstances;
   }
 }

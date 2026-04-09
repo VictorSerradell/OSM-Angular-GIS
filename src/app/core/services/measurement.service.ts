@@ -4,6 +4,7 @@
 // ============================================================
 
 import { Injectable, signal, inject } from '@angular/core';
+declare const L: any;
 import { MapService } from './map.service';
 import { LayerService } from './layer.service';
 import { MeasurementResult } from '../models/feature.model';
@@ -39,7 +40,6 @@ export class MeasurementService {
     this.measuring.set(true);
     this.measurePoints.set([]);
 
-    const L = await import('leaflet');
     const map = this.mapService.map;
     if (!map) return;
 
@@ -75,7 +75,6 @@ export class MeasurementService {
       const buffered = turf.buffer(geojson, radiusKm, { units: 'kilometers' });
       if (!buffered) return null;
 
-      const L = await import('leaflet');
       const map = this.mapService.map;
       const grp =
         this.measureLayer ?? this.layerService.getOverlayGroup('measurements');
@@ -117,7 +116,6 @@ export class MeasurementService {
   async calculateCentroid(geojson: any): Promise<any> {
     try {
       const centroid = turf.centroid(geojson);
-      const L = await import('leaflet');
       const map = this.mapService.map;
       const grp =
         this.measureLayer ?? this.layerService.getOverlayGroup('measurements');

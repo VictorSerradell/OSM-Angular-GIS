@@ -1,13 +1,16 @@
 // ============================================================
 // OSM Angular GIS - Map Service
-// Production-safe: defers Leaflet init until container
-// has real pixel dimensions (ResizeObserver pattern)
+// Uses global L (loaded via angular.json scripts) for runtime
+// Uses import type for TypeScript types only
 // ============================================================
 
 import { Injectable, signal, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import * as L from 'leaflet';
+import type * as LType from 'leaflet'; // types only, no runtime import
 import { CoordinatesDisplay } from '../models/feature.model';
+
+// Runtime L comes from global script (angular.json)
+declare const L: typeof LType;
 
 @Injectable({ providedIn: 'root' })
 export class MapService {
@@ -20,23 +23,20 @@ export class MapService {
     zoom: 2,
   });
   readonly isLocating = signal<boolean>(false);
-  readonly userLocation = signal<L.LatLng | null>(null);
+  readonly userLocation = signal<LType.LatLng | null>(null);
 
-  private _map: L.Map | null = null;
-  private _userMarker: L.Marker | null = null;
-  private _userCircle: L.Circle | null = null;
+  private _map: LType.Map | null = null;
+  private _userMarker: LType.Marker | null = null;
+  private _userCircle: LType.Circle | null = null;
   private _ro: ResizeObserver | null = null;
 
-  get map(): L.Map | null {
+  get map(): LType.Map | null {
     return this._map;
   }
 
-  async initMap(container: HTMLElement): Promise<L.Map> {
-    if (!isPlatformBrowser(this.platformId)) {
-      throw new Error('Browser only');
-    }
+  async initMap(container: HTMLElement): Promise<LType.Map> {
+    if (!isPlatformBrowser(this.platformId)) throw new Error('Browser only');
 
-    // Clean up any previous instance (HMR / double init)
     if (this._map) {
       this._map.remove();
       this._map = null;
@@ -44,32 +44,23 @@ export class MapService {
     const c = container as any;
     if (c._leaflet_id) delete c._leaflet_id;
 
-    // Wait until the container has real dimensions
     await this.waitForSize(container);
-
     return this.createMap(container);
   }
 
-  /** Returns a promise that resolves once container.clientHeight > 0 */
   private waitForSize(container: HTMLElement): Promise<void> {
     return new Promise((resolve) => {
       if (container.clientHeight > 0) {
         resolve();
         return;
       }
-
       const ro = new ResizeObserver((entries) => {
-        for (const entry of entries) {
-          if (entry.contentRect.height > 0) {
-            ro.disconnect();
-            resolve();
-            return;
-          }
+        if (entries[0].contentRect.height > 0) {
+          ro.disconnect();
+          resolve();
         }
       });
       ro.observe(container);
-
-      // Hard timeout: init anyway after 3s to avoid hanging
       setTimeout(() => {
         ro.disconnect();
         resolve();
@@ -77,7 +68,7 @@ export class MapService {
     });
   }
 
-  private async createMap(container: HTMLElement): Promise<L.Map> {
+  private createMap(container: HTMLElement): LType.Map {
     this.fixIcons();
 
     this._map = L.map(container, {
@@ -87,7 +78,7 @@ export class MapService {
       attributionControl: true,
     });
 
-    this._map.on('mousemove', (e: L.LeafletMouseEvent) => {
+    this._map.on('mousemove', (e: LType.LeafletMouseEvent) => {
       this.coordinates.set({
         lat: e.latlng.lat,
         lng: e.latlng.lng,
@@ -104,8 +95,6 @@ export class MapService {
       .addTo(this._map);
 
     this.mapReady.set(true);
-
-    // Multiple invalidateSize calls for production CSS timing
     [50, 200, 500, 1000].forEach((ms) =>
       setTimeout(() => this._map?.invalidateSize(), ms),
     );
@@ -135,7 +124,7 @@ export class MapService {
     return new Promise((resolve, reject) => {
       this._map!.locate({ setView: true, maxZoom: 16 });
 
-      this._map!.once('locationfound', (e: L.LocationEvent) => {
+      this._map!.once('locationfound', (e: LType.LocationEvent) => {
         this.isLocating.set(false);
         this.userLocation.set(e.latlng);
         this._userMarker?.remove();
@@ -143,16 +132,7 @@ export class MapService {
 
         const icon = L.divIcon({
           className: '',
-          html: `<div style="
-            width:20px;height:20px;border-radius:50%;
-            background:rgba(21,101,192,0.2);
-            display:flex;align-items:center;justify-content:center;
-            animation:location-pulse 2s ease-in-out infinite;">
-            <div style="
-              width:12px;height:12px;border-radius:50%;
-              background:#1565c0;border:2.5px solid white;
-              box-shadow:0 2px 8px rgba(21,101,192,0.6);"></div>
-          </div>`,
+          html: `<div style="width:20px;height:20px;border-radius:50%;background:rgba(21,101,192,0.2);display:flex;align-items:center;justify-content:center;animation:location-pulse 2s ease-in-out infinite"><div style="width:12px;height:12px;border-radius:50%;background:#1565c0;border:2.5px solid white;box-shadow:0 2px 8px rgba(21,101,192,0.6)"></div></div>`,
           iconSize: [20, 20],
           iconAnchor: [10, 10],
         });
@@ -160,11 +140,7 @@ export class MapService {
         this._userMarker = L.marker(e.latlng, { icon })
           .addTo(this._map!)
           .bindPopup(
-            `<div style="padding:8px">
-            <strong>Tu ubicación</strong><br/>
-            <small>${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}</small><br/>
-            <small>Precisión: ±${Math.round(e.accuracy)}m</small>
-          </div>`,
+            `<div style="padding:8px"><strong>Tu ubicación</strong><br/><small>${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}</small><br/><small>Precisión: ±${Math.round(e.accuracy)}m</small></div>`,
           )
           .openPopup();
 
@@ -179,7 +155,7 @@ export class MapService {
         resolve();
       });
 
-      this._map!.once('locationerror', (e: L.ErrorEvent) => {
+      this._map!.once('locationerror', (e: LType.ErrorEvent) => {
         this.isLocating.set(false);
         reject(new Error(e.message));
       });
@@ -187,11 +163,9 @@ export class MapService {
   }
 
   toggleFullscreen(): void {
-    if (!document.fullscreenElement) {
+    if (!document.fullscreenElement)
       document.documentElement.requestFullscreen().catch(console.warn);
-    } else {
-      document.exitFullscreen().catch(console.warn);
-    }
+    else document.exitFullscreen().catch(console.warn);
   }
 
   invalidateSize(): void {
@@ -206,20 +180,18 @@ export class MapService {
   }
 
   private fixIcons(): void {
-    // Production-safe icon fix — L.Icon.Default may be undefined in some ESM builds
     try {
-      const IconDefault =
-        (L as any).Icon?.Default ?? (L.Icon as any)?.Default ?? L.Icon?.Default;
-      if (IconDefault) {
-        delete IconDefault.prototype._getIconUrl;
-        IconDefault.mergeOptions({
+      const D = (L as any).Icon?.Default;
+      if (D) {
+        delete D.prototype._getIconUrl;
+        D.mergeOptions({
           iconRetinaUrl: 'assets/leaflet/marker-icon-2x.png',
           iconUrl: 'assets/leaflet/marker-icon.png',
           shadowUrl: 'assets/leaflet/marker-shadow.png',
         });
       }
     } catch (e) {
-      console.warn('Leaflet icon fix skipped:', e);
+      console.warn('Leaflet icon fix:', e);
     }
   }
 }

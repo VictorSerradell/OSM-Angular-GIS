@@ -84,7 +84,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       this.loading.set(true);
       await this.mapService.initMap(this.mapContainerRef.nativeElement);
       await this.layerService.initLayers();
-      await this.drawService.initDraw();
+      this.drawService.initDraw();
       this.snack.open('✅ Mapa listo', '', { duration: 2000 });
 
       this.tourService.registerTabSwitcher((i) => this.navigateToTab(i));

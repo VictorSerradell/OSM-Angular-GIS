@@ -1,10 +1,10 @@
 // ============================================================
 // OSM Angular GIS - Draw Service
-// Production-safe: leaflet-draw loaded dynamically after Leaflet
+// Uses global L from window (loaded via angular.json scripts)
+// This guarantees leaflet-draw extends the SAME L object
 // ============================================================
 
 import { Injectable, signal, inject } from '@angular/core';
-import * as L from 'leaflet';
 import { MapService } from './map.service';
 import { LayerService } from './layer.service';
 import {
@@ -12,6 +12,10 @@ import {
   GisFeatureCollection,
   DrawToolType,
 } from '../models/feature.model';
+
+// Use global L injected by angular.json scripts, not the ESM module
+// This avoids the dual-instance problem in production
+declare const L: any;
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
@@ -28,40 +32,30 @@ export class DrawService {
 
   private drawControl: any = null;
   private featureLayerMap = new Map<string, any>();
-  private LA: any = null; // leaflet + leaflet-draw extended object
 
   // ── Init ──────────────────────────────────────────────
 
-  async initDraw(): Promise<void> {
+  initDraw(): void {
     const map = this.mapService.map;
-    if (!map) return;
-
-    // Load leaflet-draw dynamically AFTER leaflet is ready
-    // This guarantees L.Draw and L.Control.Draw exist
-    await import('leaflet-draw');
-
-    // Give the browser one tick to process the side-effect import
-    await new Promise((r) => setTimeout(r, 0));
-
-    this.LA = L as any;
-
-    // Validate leaflet-draw loaded correctly
-    if (!this.LA.Control?.Draw) {
-      console.error('leaflet-draw did not load correctly');
+    if (!map) {
+      console.error('initDraw: map not ready');
       return;
     }
-    if (!this.LA.Draw?.Event) {
-      console.error('L.Draw.Event not available');
+
+    if (!L?.Control?.Draw) {
+      console.error(
+        'initDraw: L.Control.Draw not available. Check angular.json scripts.',
+      );
       return;
     }
 
     const drawnGroup = this.layerService.getOverlayGroup('drawn-features');
     if (!drawnGroup) {
-      console.error('drawn-features overlay not found');
+      console.error('initDraw: drawn-features group not found');
       return;
     }
 
-    this.drawControl = new this.LA.Control.Draw({
+    this.drawControl = new L.Control.Draw({
       position: 'topleft',
       draw: {
         polyline: { shapeOptions: { color: '#1565c0', weight: 3 } },
@@ -95,7 +89,7 @@ export class DrawService {
 
     this.drawControl.addTo(map);
 
-    map.on(this.LA.Draw.Event.CREATED, (e: any) => {
+    map.on(L.Draw.Event.CREATED, (e: any) => {
       const layer = e.layer;
       const type = e.layerType as DrawToolType;
       const feature = this.layerToGeoJSON(layer, type);
@@ -109,7 +103,7 @@ export class DrawService {
       }
     });
 
-    map.on(this.LA.Draw.Event.EDITED, (e: any) => {
+    map.on(L.Draw.Event.EDITED, (e: any) => {
       e.layers.eachLayer((layer: any) => {
         const id = layer._gisId as string | undefined;
         if (id) {
@@ -130,7 +124,7 @@ export class DrawService {
       });
     });
 
-    map.on(this.LA.Draw.Event.DELETED, (e: any) => {
+    map.on(L.Draw.Event.DELETED, (e: any) => {
       e.layers.eachLayer((layer: any) => {
         const id = layer._gisId as string | undefined;
         if (id) {
@@ -147,54 +141,53 @@ export class DrawService {
   // ── Programmatic tool activation ──────────────────────
 
   activateTool(toolType: DrawToolType): void {
-    const map = this.mapService.map;
-    if (!map || !this.LA) {
-      console.warn('Map or leaflet-draw not ready');
-      return;
-    }
-
-    const shape = {
-      color: '#1565c0',
-      weight: 2,
-      fillColor: '#1565c0',
-      fillOpacity: 0.2,
+    // Click the corresponding native Leaflet Draw toolbar button
+    // This is the most reliable way to activate a tool programmatically
+    const toolbarMap: Record<DrawToolType, string> = {
+      marker: '.leaflet-draw-draw-marker',
+      polyline: '.leaflet-draw-draw-polyline',
+      polygon: '.leaflet-draw-draw-polygon',
+      rectangle: '.leaflet-draw-draw-rectangle',
+      circle: '.leaflet-draw-draw-circle',
+      circlemarker: '.leaflet-draw-draw-circlemarker',
     };
 
-    const toolConfigs: Record<DrawToolType, { cls: any; opts: any }> = {
-      marker: { cls: this.LA.Draw?.Marker, opts: {} },
-      circlemarker: {
-        cls: this.LA.Draw?.CircleMarker,
-        opts: { color: '#1565c0', radius: 8 },
-      },
-      polyline: {
-        cls: this.LA.Draw?.Polyline,
-        opts: { shapeOptions: { ...shape, fillOpacity: 0 } },
-      },
-      polygon: {
-        cls: this.LA.Draw?.Polygon,
-        opts: { allowIntersection: false, shapeOptions: shape },
-      },
-      rectangle: {
-        cls: this.LA.Draw?.Rectangle,
-        opts: { shapeOptions: shape },
-      },
-      circle: { cls: this.LA.Draw?.Circle, opts: { shapeOptions: shape } },
-    };
+    const selector = toolbarMap[toolType];
+    const btn = document.querySelector(selector) as HTMLElement | null;
 
-    const cfg = toolConfigs[toolType];
-    if (!cfg?.cls) {
-      console.warn(
-        `Draw tool class not available: ${toolType}. leaflet-draw loaded:`,
-        !!this.LA.Draw,
-      );
-      return;
-    }
-
-    try {
-      new cfg.cls(map, cfg.opts).enable();
+    if (btn) {
+      btn.click();
       this.activeDrawTool.set(toolType);
-    } catch (e) {
-      console.error('activateTool error:', toolType, e);
+    } else {
+      // Fallback: direct instantiation
+      const map = this.mapService.map;
+      if (!map || !L?.Draw) return;
+      const shape = {
+        color: '#1565c0',
+        weight: 2,
+        fillColor: '#1565c0',
+        fillOpacity: 0.2,
+      };
+      const cfgMap: Record<string, { cls: any; opts: any }> = {
+        marker: { cls: L.Draw?.Marker, opts: {} },
+        circlemarker: { cls: L.Draw?.CircleMarker, opts: {} },
+        polyline: {
+          cls: L.Draw?.Polyline,
+          opts: { shapeOptions: { ...shape, fillOpacity: 0 } },
+        },
+        polygon: { cls: L.Draw?.Polygon, opts: { shapeOptions: shape } },
+        rectangle: { cls: L.Draw?.Rectangle, opts: { shapeOptions: shape } },
+        circle: { cls: L.Draw?.Circle, opts: { shapeOptions: shape } },
+      };
+      const t = cfgMap[toolType];
+      if (t?.cls) {
+        try {
+          new t.cls(map, t.opts).enable();
+          this.activeDrawTool.set(toolType);
+        } catch (e) {
+          console.error('activateTool fallback error:', e);
+        }
+      }
     }
   }
 
@@ -256,7 +249,7 @@ export class DrawService {
     const drawnGroup = this.layerService.getOverlayGroup('drawn-features');
     if (!map || !drawnGroup) return;
 
-    (L as any).geoJSON(geojson, {
+    L.geoJSON(geojson, {
       style: (feature: any) => ({
         color: feature?.properties?.color ?? '#1565c0',
         weight: feature?.properties?.weight ?? 2,
@@ -283,16 +276,14 @@ export class DrawService {
     });
 
     try {
-      const geoLayer = (L as any).geoJSON(geojson);
-      map.fitBounds(geoLayer.getBounds(), { padding: [20, 20] });
+      map.fitBounds(L.geoJSON(geojson).getBounds(), { padding: [20, 20] });
     } catch {
       /* empty bounds */
     }
   }
 
   clearAll(): void {
-    const drawnGroup = this.layerService.getOverlayGroup('drawn-features');
-    drawnGroup?.clearLayers();
+    this.layerService.getOverlayGroup('drawn-features')?.clearLayers();
     this.features.set([]);
     this.featureLayerMap.clear();
     this.drawnLayerCount.set(0);
@@ -307,39 +298,35 @@ export class DrawService {
       layer._drawType = type;
 
       if (type === 'circle') {
-        const center = layer.getLatLng();
-        const radius = layer.getRadius();
+        const c = layer.getLatLng();
         return {
           type: 'Feature',
-          geometry: {
-            type: 'Point',
-            coordinates: [center.lng, center.lat],
-          } as any,
+          geometry: { type: 'Point', coordinates: [c.lng, c.lat] } as any,
           properties: {
             id,
             name: this.getFeatureName(type),
             drawType: type,
-            radius,
+            radius: layer.getRadius(),
             createdAt: new Date().toISOString(),
           },
         };
       }
 
-      const geojson = layer.toGeoJSON();
-      geojson.properties = {
+      const g = layer.toGeoJSON();
+      g.properties = {
         id,
         name: this.getFeatureName(type),
         drawType: type,
         createdAt: new Date().toISOString(),
       };
-      return geojson as GisFeature;
+      return g as GisFeature;
     } catch {
       return null;
     }
   }
 
   private getFeatureName(type: DrawToolType): string {
-    const names: Record<DrawToolType, string> = {
+    const n: Record<DrawToolType, string> = {
       marker: 'Marcador',
       circle: 'Círculo',
       polygon: 'Polígono',
@@ -347,19 +334,17 @@ export class DrawService {
       rectangle: 'Rectángulo',
       circlemarker: 'Punto',
     };
-    return `${names[type] ?? 'Feature'} ${this.drawnLayerCount() + 1}`;
+    return `${n[type] ?? 'Feature'} ${this.drawnLayerCount() + 1}`;
   }
 
   private bindFeaturePopup(layer: any, feature: GisFeature): void {
     const p = feature.properties;
     layer.bindPopup(
       `
-      <div style="min-width:170px;padding:8px">
-        <div style="font-weight:600;font-size:14px;margin-bottom:4px">${p.name}</div>
-        ${p.description ? `<div style="font-size:12px;color:#666">${p.description}</div>` : ''}
-        <div style="font-size:11px;color:#999;margin-top:4px">
-          <div>Tipo: ${p.drawType ?? '—'}</div>
-          ${p.radius ? `<div>Radio: ${p.radius.toFixed(0)} m</div>` : ''}
+      <div style="padding:8px;min-width:160px">
+        <strong style="font-size:14px">${p.name}</strong>
+        <div style="font-size:11px;color:#666;margin-top:4px">
+          Tipo: ${p.drawType}${p.radius ? ` · Radio: ${p.radius.toFixed(0)}m` : ''}
         </div>
       </div>`,
       { className: 'gis-popup' },
