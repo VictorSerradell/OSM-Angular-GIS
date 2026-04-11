@@ -11,14 +11,14 @@ export interface TourStep {
   targetSelector?: string;
   position?: 'top' | 'bottom' | 'left' | 'right' | 'auto';
   icon?: string;
-  tabIndex?: number; // sidebar tab to activate before showing step
+  tabIndex?: number;   // sidebar tab to activate before showing step
 }
 
 @Injectable({ providedIn: 'root' })
 export class TourService {
-  readonly active = signal<boolean>(false);
+  readonly active       = signal<boolean>(false);
   readonly currentIndex = signal<number>(0);
-  readonly dismissed = signal<boolean>(false);
+  readonly dismissed    = signal<boolean>(false);
 
   // Callback injected by MapComponent to switch sidebar tabs
   private _switchTab?: (index: number) => void;
@@ -31,22 +31,19 @@ export class TourService {
     {
       id: 'welcome',
       title: '¡Bienvenido a OSM Angular GIS!',
-      content:
-        'Esta aplicación te permite explorar mapas, dibujar geometrías y realizar análisis geoespaciales. Te guiamos en 9 pasos rápidos.',
+      content: 'Esta aplicación te permite explorar mapas, dibujar geometrías y realizar análisis geoespaciales. Te guiamos en 9 pasos rápidos.',
       icon: 'public',
     },
     {
       id: 'map',
       title: 'El mapa interactivo',
-      content:
-        'Usa OpenStreetMap como base. Zoom con la rueda del ratón, arrastra para moverte. Los controles +/− están en la esquina superior izquierda.',
+      content: 'Usa OpenStreetMap como base. Zoom con la rueda del ratón, arrastra para moverte. Los controles +/− están en la esquina superior izquierda.',
       icon: 'map',
     },
     {
       id: 'search',
       title: 'Buscar lugares',
-      content:
-        'Escribe cualquier ciudad, dirección o lugar. Nominatim/OSM encuentra y centra el mapa automáticamente. También tienes accesos rápidos.',
+      content: 'Escribe cualquier ciudad, dirección o lugar. Nominatim/OSM encuentra y centra el mapa automáticamente. También tienes accesos rápidos.',
       targetSelector: '.tab-content',
       icon: 'search',
       position: 'right',
@@ -55,8 +52,7 @@ export class TourService {
     {
       id: 'layers',
       title: 'Cambiar capas del mapa',
-      content:
-        'Elige entre OSM Standard, Cycle Map, Transport, CartoDB Positron/Dark o imágenes ESRI. También activa/desactiva capas de datos.',
+      content: 'Elige entre OSM Standard, Cycle Map, Transport, CartoDB Positron/Dark o imágenes ESRI. También activa/desactiva capas de datos.',
       targetSelector: '.tab-content',
       icon: 'layers',
       position: 'right',
@@ -65,8 +61,7 @@ export class TourService {
     {
       id: 'draw',
       title: 'Herramientas de dibujo',
-      content:
-        'Dibuja marcadores, líneas, polígonos, rectángulos y círculos sobre el mapa. Activa una herramienta y haz clic en el mapa.',
+      content: 'Dibuja marcadores, líneas, polígonos, rectángulos y círculos sobre el mapa. Activa una herramienta y haz clic en el mapa.',
       targetSelector: '.tab-content',
       icon: 'edit',
       position: 'right',
@@ -75,8 +70,7 @@ export class TourService {
     {
       id: 'analysis',
       title: 'Análisis geoespacial',
-      content:
-        'Mide distancias y áreas haciendo clic en el mapa. Genera buffers configurables y calcula centroides con Turf.js.',
+      content: 'Mide distancias y áreas haciendo clic en el mapa. Genera buffers configurables y calcula centroides con Turf.js.',
       targetSelector: '.tab-content',
       icon: 'construction',
       position: 'right',
@@ -85,18 +79,37 @@ export class TourService {
     {
       id: 'data',
       title: 'Gestión de datos GeoJSON',
-      content:
-        'Importa y exporta GeoJSON, edita las propiedades de cada feature, elimina geometrías o copia el GeoJSON al portapapeles.',
+      content: 'Importa y exporta GeoJSON, edita las propiedades de cada feature, elimina geometrías o copia el GeoJSON al portapapeles.',
       targetSelector: '.tab-content',
       icon: 'dataset',
       position: 'right',
       tabIndex: 4,
     },
     {
+      id: 'routing',
+      title: 'Planificador de rutas',
+      content: 'Calcula rutas a pie, bici o coche con OSRM. Haz clic en el mapa para añadir puntos de paso y obtén el perfil de elevación.',
+      icon: 'route',
+      tabIndex: 4,
+    },
+    {
+      id: 'topology',
+      title: 'Análisis topológico',
+      content: 'Opera entre polígonos: intersección, unión, diferencia y más. Obtén estadísticas de área y solapamiento al instante.',
+      icon: 'join_inner',
+      tabIndex: 5,
+    },
+    {
+      id: 'import',
+      title: 'Importar archivos',
+      content: 'Importa tracks GPX de Garmin/Strava, mapas KML de Google Earth, GeoJSON o CSV con coordenadas. Arrastra y suelta.',
+      icon: 'upload_file',
+      tabIndex: 6,
+    },
+    {
       id: 'locate',
       title: 'Tu ubicación GPS',
-      content:
-        'Pulsa el botón azul para centrar el mapa en tu posición GPS. Se muestra tu ubicación con un punto animado y un círculo de precisión.',
+      content: 'Pulsa el botón azul para centrar el mapa en tu posición GPS. Se muestra tu ubicación con un punto animado y un círculo de precisión.',
       targetSelector: '.fab--locate',
       icon: 'my_location',
       position: 'left',
@@ -104,28 +117,24 @@ export class TourService {
     {
       id: 'theme',
       title: 'Modo oscuro / claro',
-      content:
-        'Cambia entre modo claro y oscuro con el botón del sol/luna en la barra superior. La preferencia se guarda automáticamente.',
+      content: 'Cambia entre modo claro y oscuro con el botón del sol/luna en la barra superior. La preferencia se guarda automáticamente.',
       icon: 'dark_mode',
     },
     {
       id: 'done',
       title: '¡Listo para explorar!',
-      content:
-        '¡Ya conoces todas las funciones! Dibuja features, exporta tu trabajo como GeoJSON y explora el mundo con OSM Angular GIS.',
+      content: '¡Ya conoces todas las funciones! Dibuja features, exporta tu trabajo como GeoJSON y explora el mundo con OSM Angular GIS.',
       icon: 'celebration',
     },
   ];
 
-  readonly currentStep = computed(() =>
-    this.active() ? (this.steps[this.currentIndex()] ?? null) : null,
+  readonly currentStep  = computed(() =>
+    this.active() ? (this.steps[this.currentIndex()] ?? null) : null
   );
-  readonly isFirst = computed(() => this.currentIndex() === 0);
-  readonly isLast = computed(
-    () => this.currentIndex() === this.steps.length - 1,
-  );
+  readonly isFirst  = computed(() => this.currentIndex() === 0);
+  readonly isLast   = computed(() => this.currentIndex() === this.steps.length - 1);
   readonly progress = computed(() =>
-    Math.round(((this.currentIndex() + 1) / this.steps.length) * 100),
+    Math.round(((this.currentIndex() + 1) / this.steps.length) * 100)
   );
 
   start(): void {
