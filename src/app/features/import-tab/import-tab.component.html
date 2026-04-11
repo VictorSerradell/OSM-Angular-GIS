@@ -1,0 +1,62 @@
+<div class="tab-content">
+  <p class="tab-description">
+    Importa rutas y datos geográficos. Soporta GPX, KML, GeoJSON y CSV con columnas lat/lon.
+  </p>
+
+  <!-- Drop zone — click calls openFileDialog(), no template ref needed -->
+  <div class="drop-zone" [class.dragging]="isDragging" (dragover)="onDragOver($event)" (dragleave)="onDragLeave()"
+    (drop)="onDrop($event)" (click)="openFileDialog()">
+    @if (importer.loading()) {
+    <mat-spinner diameter="32"></mat-spinner>
+    <span>Importando…</span>
+    } @else {
+    <mat-icon>upload_file</mat-icon>
+    <span class="dz-title">Arrastra un archivo aquí</span>
+    <span class="dz-sub">o haz clic para seleccionar</span>
+    }
+  </div>
+
+  <!-- Format chips -->
+  <div class="format-chips">
+    <mat-chip highlighted color="primary">GPX</mat-chip>
+    <mat-chip>KML</mat-chip>
+    <mat-chip>GeoJSON</mat-chip>
+    <mat-chip>CSV</mat-chip>
+  </div>
+
+  @if (importer.error()) {
+  <div class="error-box"><mat-icon>error_outline</mat-icon>{{ importer.error() }}</div>
+  }
+
+  @if (importer.lastResult(); as r) {
+  <div class="success-box">
+    <mat-icon>check_circle</mat-icon>
+    <div class="success-info">
+      <strong>{{ r.filename }}</strong>
+      <span>{{ r.count }} features · {{ r.format.toUpperCase() }}</span>
+    </div>
+  </div>
+  }
+
+  <mat-divider></mat-divider>
+
+  <div class="format-guide">
+    <div class="fg-title">Formatos soportados</div>
+    <div class="fg-item">
+      <mat-icon>directions</mat-icon>
+      <div><strong>GPX</strong> — Garmin, Strava, Wikiloc. Tracks, rutas y waypoints.</div>
+    </div>
+    <div class="fg-item">
+      <mat-icon>map</mat-icon>
+      <div><strong>KML</strong> — Google Maps / Earth. Puntos, líneas y polígonos.</div>
+    </div>
+    <div class="fg-item">
+      <mat-icon>data_object</mat-icon>
+      <div><strong>GeoJSON</strong> — Estándar universal. Cualquier geometría.</div>
+    </div>
+    <div class="fg-item">
+      <mat-icon>table_chart</mat-icon>
+      <div><strong>CSV</strong> — Requiere columnas <code>lat</code> y <code>lon</code>. Auto-detecta separador.</div>
+    </div>
+  </div>
+</div>

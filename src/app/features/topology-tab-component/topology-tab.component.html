@@ -1,0 +1,82 @@
+<div class="tab-content">
+  <p class="tab-description">
+    Operaciones topológicas entre polígonos con Turf.js.
+    Dibuja dos polígonos en <strong>Dibujar</strong> primero.
+  </p>
+
+  @if (topo.polygonFeatures.length < 2) {
+    <div class="empty-state">
+      <mat-icon>hexagon</mat-icon>
+      <p>Necesitas al menos <strong>2 polígonos</strong> dibujados.</p>
+    </div>
+  } @else {
+
+    <!-- Native selects — no MatSelect/FormsModule needed -->
+    <div class="select-row">
+      <label class="select-label">Feature A</label>
+      <select class="native-select" (change)="onSelectA($event)">
+        <option value="">— Selecciona —</option>
+        @for (f of topo.polygonFeatures; track f.properties.id) {
+          <option [value]="f.properties.id">{{ f.properties.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="select-row">
+      <label class="select-label">Feature B</label>
+      <select class="native-select" (change)="onSelectB($event)">
+        <option value="">— Selecciona —</option>
+        @for (f of topo.polygonFeatures; track f.properties.id) {
+          @if (f.properties.id !== selectedA()) {
+            <option [value]="f.properties.id">{{ f.properties.name }}</option>
+          }
+        }
+      </select>
+    </div>
+
+    <!-- Operation buttons -->
+    <div class="ops-grid">
+      @for (op of operations; track op.id) {
+        <button mat-stroked-button
+          class="op-btn"
+          [class.active]="selectedOp() === op.id"
+          (click)="selectedOp.set(op.id)">
+          <mat-icon>{{ op.icon }}</mat-icon>
+          <span class="op-label">{{ op.label }}</span>
+          <span class="op-desc">{{ op.desc }}</span>
+        </button>
+      }
+    </div>
+
+    <button mat-flat-button color="primary"
+      [disabled]="!canRun()"
+      (click)="run()">
+      @if (topo.loading()) { <mat-spinner diameter="18"></mat-spinner> }
+      @else { <mat-icon>play_arrow</mat-icon> }
+      Ejecutar
+    </button>
+  }
+
+  @if (topo.error()) {
+    <div class="error-box"><mat-icon>error_outline</mat-icon>{{ topo.error() }}</div>
+  }
+
+  @if (topo.lastResult(); as r) {
+    <mat-divider></mat-divider>
+    <div class="result-header">{{ topo.opLabel(r.operation) }}</div>
+    <div class="stats-grid">
+      <div class="stat-item"><span class="stat-l">Área A</span><span class="stat-v">{{ topo.formatArea(r.stats.areaA) }}</span></div>
+      <div class="stat-item"><span class="stat-l">Área B</span><span class="stat-v">{{ topo.formatArea(r.stats.areaB) }}</span></div>
+      <div class="stat-item"><span class="stat-l">Resultado</span><span class="stat-v">{{ topo.formatArea(r.stats.areaResult) }}</span></div>
+      <div class="stat-item"><span class="stat-l">Solapamiento</span><span class="stat-v">{{ r.stats.overlapPct.toFixed(1) }}%</span></div>
+    </div>
+    @if (r.result) {
+      <div class="result-actions">
+        <button mat-stroked-button (click)="save()"><mat-icon>save</mat-icon> Guardar feature</button>
+        <button mat-stroked-button color="warn" (click)="clear()"><mat-icon>clear</mat-icon> Limpiar</button>
+      </div>
+    } @else {
+      <div class="no-result"><mat-icon>info</mat-icon> Sin solapamiento entre las geometrías.</div>
+    }
+  }
+</div>

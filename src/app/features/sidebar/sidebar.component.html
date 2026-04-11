@@ -1,14 +1,9 @@
-<!-- ============================================================
-  OSM Angular GIS - Sidebar Component Template
-  ============================================================ -->
-
 <mat-tab-group
   class="sidebar-tabs"
   [selectedIndex]="selectedTabIndex()"
   (selectedIndexChange)="tabChange.emit($event)"
   animationDuration="200ms">
 
-  <!-- ── Tab 1: Buscar ──────────────────────────────────── -->
   <mat-tab>
     <ng-template mat-tab-label>
       <mat-icon class="tab-icon">search</mat-icon>
@@ -17,7 +12,6 @@
     <app-search-tab />
   </mat-tab>
 
-  <!-- ── Tab 2: Capas ───────────────────────────────────── -->
   <mat-tab>
     <ng-template mat-tab-label>
       <mat-icon class="tab-icon">layers</mat-icon>
@@ -26,7 +20,6 @@
     <app-layers-tab />
   </mat-tab>
 
-  <!-- ── Tab 3: Dibujar ────────────────────────────────── -->
   <mat-tab>
     <ng-template mat-tab-label>
       <mat-icon class="tab-icon">edit</mat-icon>
@@ -35,7 +28,6 @@
     <app-draw-tab />
   </mat-tab>
 
-  <!-- ── Tab 4: Análisis ───────────────────────────────── -->
   <mat-tab>
     <ng-template mat-tab-label>
       <mat-icon class="tab-icon">construction</mat-icon>
@@ -44,7 +36,33 @@
     <app-tools-tab />
   </mat-tab>
 
-  <!-- ── Tab 5: Datos ──────────────────────────────────── -->
+  <!-- NEW: Routing -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">route</mat-icon>
+      <span class="tab-label">Ruta</span>
+    </ng-template>
+    <app-routing-tab />
+  </mat-tab>
+
+  <!-- NEW: Topology -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">join_inner</mat-icon>
+      <span class="tab-label">Topología</span>
+    </ng-template>
+    <app-topology-tab />
+  </mat-tab>
+
+  <!-- NEW: Import -->
+  <mat-tab>
+    <ng-template mat-tab-label>
+      <mat-icon class="tab-icon">upload_file</mat-icon>
+      <span class="tab-label">Importar</span>
+    </ng-template>
+    <app-import-tab />
+  </mat-tab>
+
   <mat-tab>
     <ng-template mat-tab-label>
       <mat-icon

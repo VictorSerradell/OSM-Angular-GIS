@@ -1,0 +1,100 @@
+<div class="tab-content">
+  <p class="tab-description">
+    Calcula rutas óptimas usando OSRM. Haz clic en el mapa para añadir puntos de paso.
+  </p>
+
+  <!-- Profile selector -->
+  <div class="profile-row">
+    <button mat-stroked-button [class.active]="routing.activeProfile() === 'walking'" (click)="setProfile('walking')">
+      <mat-icon>directions_walk</mat-icon> A pie
+    </button>
+    <button mat-stroked-button [class.active]="routing.activeProfile() === 'cycling'" (click)="setProfile('cycling')">
+      <mat-icon>directions_bike</mat-icon> Bici
+    </button>
+    <button mat-stroked-button [class.active]="routing.activeProfile() === 'driving'" (click)="setProfile('driving')">
+      <mat-icon>directions_car</mat-icon> Coche
+    </button>
+  </div>
+
+  <!-- Waypoint controls -->
+  <div class="waypoint-controls">
+    <button mat-flat-button [color]="isAddingWaypoints ? 'warn' : 'primary'" (click)="toggleWaypoints()">
+      <mat-icon>{{ isAddingWaypoints ? 'stop' : 'add_location' }}</mat-icon>
+      {{ isAddingWaypoints ? 'Dejar de añadir' : 'Añadir punto de paso' }}
+    </button>
+
+    @if (routing.waypoints().length > 0) {
+    <button mat-icon-button (click)="routing.removeLastWaypoint()" matTooltip="Quitar último punto">
+      <mat-icon>undo</mat-icon>
+    </button>
+    <button mat-icon-button color="warn" (click)="routing.clearAll()" matTooltip="Limpiar todo">
+      <mat-icon>delete_sweep</mat-icon>
+    </button>
+    }
+  </div>
+
+  <!-- Waypoint list -->
+  @if (routing.waypoints().length > 0) {
+  <div class="waypoints-list">
+    @for (wp of routing.waypoints(); track $index) {
+    <div class="waypoint-item">
+      <span class="wp-num">{{ $index + 1 }}</span>
+      <span class="wp-coords">{{ wp.lat.toFixed(5) }}, {{ wp.lng.toFixed(5) }}</span>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- Loading -->
+  @if (routing.loading()) {
+  <div class="loading-row">
+    <mat-spinner diameter="24"></mat-spinner>
+    <span>Calculando ruta…</span>
+  </div>
+  }
+
+  <!-- Error -->
+  @if (routing.error()) {
+  <div class="error-box"><mat-icon>error_outline</mat-icon>{{ routing.error() }}</div>
+  }
+
+  <!-- Result -->
+  @if (routing.result(); as r) {
+  <mat-divider></mat-divider>
+  <div class="route-stats">
+    <div class="stat"><mat-icon>straighten</mat-icon>{{ routing.formatDistance(r.totalDistance) }}</div>
+    <div class="stat"><mat-icon>schedule</mat-icon>{{ routing.formatDuration(r.totalDuration) }}</div>
+  </div>
+
+  <!-- Elevation chart -->
+  @if (r.elevationProfile.length > 0) {
+  <div class="chart-wrapper">
+    <div class="chart-title">Perfil de elevación</div>
+    <canvas #elevChart class="elev-canvas"></canvas>
+  </div>
+  }
+
+  <!-- Steps -->
+  @if (r.steps.length > 0) {
+  <div class="steps-header">Instrucciones ({{ r.steps.length }} pasos)</div>
+  <div class="steps-list">
+    @for (step of r.steps.slice(0, 12); track $index) {
+    <div class="step-item">
+      <mat-icon class="step-icon">turn_right</mat-icon>
+      <div class="step-info">
+        <span>{{ step.name || step.instruction }}</span>
+        <span class="step-dist">{{ routing.formatDistance(step.distance) }}</span>
+      </div>
+    </div>
+    }
+  </div>
+  }
+  }
+
+  <!-- Empty state -->
+  @if (!routing.loading() && !routing.result() && routing.waypoints().length < 2) { <div class="empty-state">
+    <mat-icon>route</mat-icon>
+    <p>Añade al menos 2 puntos en el mapa para calcular una ruta.</p>
+</div>
+}
+</div>
