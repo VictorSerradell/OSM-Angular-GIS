@@ -7,7 +7,8 @@
 .tour-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.58);
+  // Light overlay — spotlight box-shadow handles deeper darkening when active
+  background: rgba(0, 0, 0, 0.35);
   z-index: 9998;
   cursor: pointer;
   animation: fadeIn 0.25s ease;
@@ -27,11 +28,12 @@
     0 0 0 6px rgba(255, 255, 255, 0.3),
     0 0 0 9999px rgba(0, 0, 0, 0.58);
   transition:
-    top     0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    left    0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    width   0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    height  0.35s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.25s ease;
+    top     0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    left    0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    width   0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    height  0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease,
+    box-shadow 0.2s ease;
   animation: spotlightIn 0.3s ease;
 
   // Hidden state: use opacity + clip instead of display:none
@@ -49,8 +51,10 @@
 .tour-tooltip {
   position: fixed;
   z-index: 10001;
-  width: 300px;
-  max-width: calc(100vw - 32px);
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.26), 0 2px 8px rgba(0,0,0,0.14);
@@ -180,7 +184,8 @@
   line-height: 1.65;
   color: rgba(0,0,0,0.62);
   margin: 0;
-  padding: 0 14px 10px;
+  padding: 0 14px 12px;
+  // No max-height or overflow — let content expand naturally
 
   .dark-theme & { color: rgba(255,255,255,0.58); }
 }
