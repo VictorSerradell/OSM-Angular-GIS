@@ -191,6 +191,85 @@ export class DrawService {
     }
   }
 
+  // ── Edit / remove (native edit toolbar, clicked programmatically) ──
+  // Same technique as activateTool(): the native Leaflet.Draw edit
+  // toolbar stays mounted (hidden via CSS) purely as the state machine
+  // Leaflet.Draw expects; we drive it from our own Material buttons.
+
+  activateEdit(): void {
+    const btn = document.querySelector(
+      '.leaflet-draw-edit-edit',
+    ) as HTMLElement | null;
+    btn?.click();
+  }
+
+  activateRemove(): void {
+    const btn = document.querySelector(
+      '.leaflet-draw-edit-remove',
+    ) as HTMLElement | null;
+    btn?.click();
+  }
+
+  cancelActiveTool(): void {
+    // Leaflet Draw toggles a tool off when its toolbar button is
+    // clicked again while active - same selector map as activateTool.
+    const toolbarMap: Record<DrawToolType, string> = {
+      marker: '.leaflet-draw-draw-marker',
+      polyline: '.leaflet-draw-draw-polyline',
+      polygon: '.leaflet-draw-draw-polygon',
+      rectangle: '.leaflet-draw-draw-rectangle',
+      circle: '.leaflet-draw-draw-circle',
+      circlemarker: '.leaflet-draw-draw-circlemarker',
+    };
+    const active = this.activeDrawTool();
+    if (!active) return;
+    const btn = document.querySelector(
+      toolbarMap[active],
+    ) as HTMLElement | null;
+    btn?.click();
+    this.activeDrawTool.set(null);
+  }
+
+  private readonly toolMeta: Record<
+    DrawToolType,
+    { label: string; hint: string }
+  > = {
+    marker: {
+      label: 'Marcador',
+      hint: 'Haz clic en el mapa para colocar el marcador.',
+    },
+    polyline: {
+      label: 'Línea',
+      hint: 'Clic para añadir puntos. Doble clic para finalizar.',
+    },
+    polygon: {
+      label: 'Polígono',
+      hint: 'Clic para añadir vértices. Clic en el primer punto para cerrar.',
+    },
+    rectangle: {
+      label: 'Rectángulo',
+      hint: 'Clic y arrastra para dibujar el rectángulo.',
+    },
+    circle: {
+      label: 'Círculo',
+      hint: 'Clic en el centro y arrastra para definir el radio.',
+    },
+    circlemarker: {
+      label: 'Punto',
+      hint: 'Haz clic en el mapa para colocar el punto.',
+    },
+  };
+
+  getActiveToolLabel(): string {
+    const active = this.activeDrawTool();
+    return active ? this.toolMeta[active].label : '';
+  }
+
+  getActiveToolHint(): string {
+    const active = this.activeDrawTool();
+    return active ? this.toolMeta[active].hint : '';
+  }
+
   // ── Feature management ────────────────────────────────
 
   deleteFeature(id: string): void {
